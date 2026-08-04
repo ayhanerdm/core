@@ -28,7 +28,7 @@ class SearchUserID
     {
         if(is_null($userQuery) || empty($userQuery)) return false; // No query provided
 
-        foreach (['userAccounts', 'userEmails', 'userUsernames', 'userPhones'] as $method) {
+        foreach (['userAccounts', 'userEmails', 'userUsernames', /* 'userPhones' */] as $method) {
             if (($result = self::$method($userQuery, $pdo)) !== false) return $result;
         }
 
