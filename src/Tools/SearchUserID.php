@@ -48,22 +48,22 @@ class SearchUserID
     {
         $sql = 'select * from '. self::$accountsTable->value .' where '.
         'user_id = :query_user_id or md5(user_id) = :query_md5_user_id '. // User ID
-        'or tg_id = :query_tg_id or md5(tg_id) = :query_md5_tg_id '. // Turkish Government ID
-        'or email = :query_email or md5(email) = :query_md5_email '. // Email
-        'or phone = :query_phone or md5(phone) = :query_md5_phone '. // Phone
-        'or username = :query_username or md5(username) = :query_md5_username'; // Username
+        'or tg_id = :query_tg_id or md5(tg_id) = :query_md5_tg_id '; // Turkish Government ID
+        // 'or email = :query_email or md5(email) = :query_md5_email '. // Email
+        // 'or phone = :query_phone or md5(phone) = :query_md5_phone '. // Phone
+        // 'or username = :query_username or md5(username) = :query_md5_username'; // Username
 
         $params = [
             ':query_user_id'      => $userQuery,
             ':query_md5_user_id'  => $userQuery,
             ':query_tg_id'        => $userQuery,
             ':query_md5_tg_id'    => $userQuery,
-            ':query_email'        => $userQuery,
-            ':query_md5_email'    => $userQuery,
-            ':query_phone'        => $userQuery,
-            ':query_md5_phone'    => $userQuery,
-            ':query_username'     => $userQuery,
-            ':query_md5_username' => $userQuery,
+            // ':query_email'        => $userQuery,
+            // ':query_md5_email'    => $userQuery,
+            // ':query_phone'        => $userQuery,
+            // ':query_md5_phone'    => $userQuery,
+            // ':query_username'     => $userQuery,
+            // ':query_md5_username' => $userQuery,
         ];
 
         $prep = $pdo->prepare($sql);
