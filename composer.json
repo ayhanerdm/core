@@ -1,0 +1,20 @@
+{
+    "name": "ayhanerdm/core",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "ayhanerdm\\Core\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Ayhan Erdem",
+            "email": "ayhanerdm.dev@gmail.com"
+        }
+    ],
+    "require": {
+        "monolog/monolog": "^3.6",
+        "vlucas/phpdotenv": "^5.6",
+        "verot/class.upload.php": "^2.1"
+    }
+}
