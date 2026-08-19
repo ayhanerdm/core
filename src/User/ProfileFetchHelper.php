@@ -28,7 +28,7 @@ class ProfileFetchHelper {
     public ?string $cover_url = null;
     public ?string $gravatar_url = null; // Gravatar URL based on email
     public ?string $birthdate = null;
-    public ?int $birthdate_timestamp = null;
+    $this->birthdate_timestamp = $dynamicValue !== null ? (int) $dynamicValue : null;
     public ?string $sex = null;
     public ?string $gender = null;
     public ?string $pronouns = null;
