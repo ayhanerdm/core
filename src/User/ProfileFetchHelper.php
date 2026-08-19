@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace ayhanerdm\Core\User;
 
 use ayhanerdm\Core\Tools\{ SearchUserID, Domain };
@@ -27,6 +28,7 @@ class ProfileFetchHelper {
     public ?string $cover_url = null;
     public ?string $gravatar_url = null; // Gravatar URL based on email
     public ?string $birthdate = null;
+    public ?int $birthdate_timestamp = null;
     public ?string $sex = null;
     public ?string $gender = null;
     public ?string $pronouns = null;
