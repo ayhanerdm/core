@@ -1,5 +1,4 @@
 <?php
-declare(strict_types=1);
 namespace ayhanerdm\Core\User;
 
 use ayhanerdm\Core\Tools\{ SearchUserID, Domain };
@@ -28,12 +27,13 @@ class ProfileFetchHelper {
     public ?string $cover_url = null;
     public ?string $gravatar_url = null; // Gravatar URL based on email
     public ?string $birthdate = null;
-    $this->birthdate_timestamp = $dynamicValue !== null ? (int) $dynamicValue : null;
     public ?string $sex = null;
     public ?string $gender = null;
     public ?string $pronouns = null;
     public ?string $short_biography = null;
     public ?string $long_biography = null;
+
+    public object|array|null $result = null;
 
     /**
      * Fetch a profile row by userQuery (user_id, email, username, etc.).
@@ -45,11 +45,10 @@ class ProfileFetchHelper {
         if(is_null($fetchMethod)) $fetchMethod = self::$fetchMethod;
         $prep = $pdo->prepare('select * from '.self::$userTable.' where user_id = :user_id limit 1');
         $prep->execute(['user_id' => $user_id]);
-        if($prep->rowCount() == 0) return false;
+        if($prep->rowCount() == 0) throw new \Exception('Profile not found.');
         $result = $prep->fetch($fetchMethod);
         $result = self::displayHelper($result, $pdo);
-        $instance = $this->populateFromFetchResult($result);
-        return $instance;
+        $this->result = $this->populateFromFetchResult($result);
     }
 
     public function getAvatarImage(bool $base64 = false): ?string {
@@ -230,7 +229,7 @@ class ProfileFetchHelper {
     /**
      * Populate this instance with fetch results, excluding avatar_image and cover_image.
      */
-    public function populateFromFetchResult(object|array $result): void {
+    public function populateFromFetchResult(object|array $result) {
         if(is_object($result)) {
             foreach(get_object_vars($result) as $key => $value) {
                 if($key !== 'avatar_image' && $key !== 'cover_image') {
@@ -244,5 +243,7 @@ class ProfileFetchHelper {
                 }
             }
         }
+
+        return $result;
     }
 }

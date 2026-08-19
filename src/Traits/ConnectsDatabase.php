@@ -84,7 +84,6 @@ Trait ConnectsDatabase {
     public static function setDatabase(PDO $pdo): bool|self {
         if(!$pdo instanceof PDO) {
             throw new Exception('First parameter must be an instance of PDO'); // Validate that the provided instance is a PDO instance
-            return false;
         }
 
         self::$pdo = $pdo;
@@ -143,15 +142,12 @@ Trait ConnectsDatabase {
     private static function setUserTable(string $userTable): bool|self {
         if(!is_string($userTable)) {
             throw new Exception('User table name must be a string.');
-            return false;
         }
         if(empty($userTable)) {
             throw new Exception('User table name cannot be empty.');
-            return false;
         }
         if(strpos($userTable, 'user_') !== 0) {
             throw new Exception('User table name must start with "user_" prefix.');
-            return false;
         }
 
         self::$userTable = $userTable;
@@ -167,7 +163,6 @@ Trait ConnectsDatabase {
     public static function getUserTable(): string {
         if(!isset(self::$userTable)) {
             throw new Exception('User table not set.');
-            return false;
         }
 
         return self::$userTable;
@@ -183,19 +178,16 @@ Trait ConnectsDatabase {
     public static function setUserQuery(int|string $userQuery): bool|self {
         if(!isset(self::$pdo)) {
             throw new Exception('Database connection not set.');
-            return false;
         }
 
         if(!is_int($userQuery) && !is_string($userQuery)) {
             throw new Exception('User query must be either an integer or a string.');
-            return false;
         }
 
         $SearchResult = SearchUserID::Search($userQuery, self::getDatabase());
 
         if($SearchResult === false) {
             throw new Exception('User not found.');
-            return false;
         }
 
         self::$userID = $SearchResult;
@@ -212,7 +204,6 @@ Trait ConnectsDatabase {
     public static function getUserID(): int {
         if(!isset(self::$userID)) {
             throw new Exception('User ID not set, call setUserQuery() first.');
-            return false;
         }
 
         return self::$userID;
@@ -284,7 +275,6 @@ Trait ConnectsDatabase {
 
         if(!isset(self::$userTable)) {
             throw new Exception('User table not set.');
-            return false;
         }
 
         $stmt = $pdo->query('show create table ' . self::$userTable);
@@ -292,7 +282,6 @@ Trait ConnectsDatabase {
 
         if(!$result) {
             throw new Exception('Table not found: ' . self::$userTable);
-            return false;
         }
 
         return $result['Create Table'] ?? false; // Return the create table SQL or false if not found
