@@ -103,8 +103,8 @@ class ProfileFetchHelper {
             $profile->handle = !empty($username) ? $username : md5($profile->user_id);
 
             $profile->profile_url = 'https://'. Domain::getDomain(). '/' .$profile->handle;
-            $profile->avatar_url = 'https://api.'. Domain::getDomain().'/user/'. $profile->handle . '/avatar';
-            $profile->cover_url = 'https://api.'. Domain::getDomain().'/user/'. $profile->handle . '/cover';
+            $profile->avatar_url = 'https://'. Domain::getDomain().'/user/'. $profile->handle . '/avatar';
+            $profile->cover_url = 'https://'. Domain::getDomain().'/user/'. $profile->handle . '/cover';
             $profile->gravatar_url = 'https://www.gravatar.com/avatar/'. md5(strtolower(trim($email))) . '?d=identicon';
         }
 
