@@ -25,7 +25,7 @@ Trait ConnectsDatabase {
     /**
      * @var int $fetchMethod The fetch method for PDO queries, default is PDO::FETCH_OBJ.
      */
-    private static int $fetchMethod = self::DEFAULT_FETCH_METHOD;
+    private static $fetchMethod = self::DEFAULT_FETCH_METHOD;
 
     /**
      * @var int|string $userQuery The user quer can be user_id, Turkish Government ID, email, username, phone number.
