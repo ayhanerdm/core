@@ -159,8 +159,8 @@ class Profile {
         $userID = SearchUserID::Search($userQuery, $pdo);
         if($userID === false) {
             throw new Exception('User not found with the provided query: ' . $userQuery);
-            return false;
         }
+        
         $prep = $pdo->prepare('delete from '.self::$userTable.' where user_id = :user_id');
         $result = $prep->execute(['user_id' => $userID]);
         if($result) self::setLastAffectedId($userID);

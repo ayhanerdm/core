@@ -140,9 +140,12 @@ class Account {
         ?string $phone = self::UNSET,
         ?string $username = self::UNSET,
         #[\SensitiveParameter] $password = self::UNSET,
-        $registered_at = self::UNSET,
-        $online_status = self::UNSET,
         $last_online = self::UNSET,
+        \ayhanerdm\Enums\UserOnlineStatuses|int|null $online_status = self::UNSET,
+        $registered_at = self::UNSET,
+        $updated_at = self::UNSET,
+        $deleted_at = self::UNSET,
+
         ?PDO $pdo = null
     ): bool {
         // Set the user table name from enum or selected table
@@ -178,24 +181,48 @@ class Account {
         if($password !== self::UNSET) {
             $fields[] = 'password = :password';
             // Hash password if not null, otherwise set to null
-            $params['password'] = $password !== null ? password_hash($password, PASSWORD_BCRYPT, ['cost'=>13]) : null;
+            $params['password'] = $password !== null ? password_hash($password, PASSWORD_BCRYPT, ['cost' => 13]) : null;
         }
-        // Only update registered_at if explicitly provided
-        if($registered_at !== self::UNSET) {
-            $fields[] = 'registered_at = :registered_at';
-            $params['registered_at'] = $registered_at;
-        }
-        // Only update online_status if explicitly provided
-        if($online_status !== self::UNSET) {
-            $fields[] = 'online_status = :online_status';
-            // If online_status is an enum, get its int value, else use as is
-            $params['online_status'] = $online_status?->getStatusInt();
-        }
+
         // Only update last_online if explicitly provided
         if($last_online !== self::UNSET) {
             $fields[] = 'last_online = :last_online';
             $params['last_online'] = $last_online;
         }
+        
+        // Only update online_status if explicitly provided
+        if($online_status !== self::UNSET) {
+            $fields[] = 'online_status = :online_status';
+            // If online_status is an enum, get its int value, else use as is
+            if($online_status instanceof \ayhanerdm\Enums\UserOnlineStatuses) {
+                $params['online_status'] = $online_status->getStatusInt();
+            } else {
+                $params['online_status'] = $online_status;
+            }
+        }
+
+        // Only update registered_at if explicitly provided
+        if($registered_at !== self::UNSET) {
+            $fields[] = 'registered_at = :registered_at';
+            $params['registered_at'] = $registered_at;
+        }
+        
+        // Only update updated_at if explicitly provided
+        if($updated_at !== self::UNSET) {
+            $fields[] = 'updated_at = :updated_at';
+            $params['updated_at'] = $updated_at;
+        } else {
+            // If updated_at is not provided, set it to current timestamp
+            $fields[] = 'updated_at = :updated_at';
+            $params['updated_at'] = time();
+        }
+
+        // Only update deleted_at if explicitly provided
+        if($deleted_at !== self::UNSET) {
+            $fields[] = 'deleted_at = :deleted_at';
+            $params['deleted_at'] = $deleted_at;
+        }
+        
         // If no fields to update, return false
         if(empty($fields)) return false;
         // Build SQL update statement dynamically
