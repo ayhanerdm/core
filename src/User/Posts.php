@@ -29,7 +29,7 @@ class Posts {
     public static function Fetch(
         ?int $user_id = null,
         ?int $post_id = null,
-        int $fetchMethod = PDO::FETCH_OBJ,
+        ?int $fetchMethod = null,
         ?PDO $pdo = null,
     ): mixed {
         $pdo = self::getDatabase($pdo);
@@ -55,8 +55,40 @@ class Posts {
             $stmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
         }
         $stmt->execute();
+
+        if($fetchMethod === null) $fetchMethod = self::$fetchMethod;
         
         return $stmt->fetch($fetchMethod);
+    }
+
+    public static function FetchAll(
+        ?int $user_id = null,
+        ?int $fetchMethod = null,
+        ?PDO $pdo = null,
+    ): array {
+        $pdo = self::getDatabase($pdo);
+        $where = [];
+        $params = [];
+
+        if($user_id !== null) {
+            $where[] = 'user_id = :user_id';
+            $params[':user_id'] = $user_id;
+        }
+
+        $sql = 'select * from ' . self::$userTable;
+        if($where) {
+            $sql .= ' where ' . implode(' and ', $where);
+        }
+
+        $stmt = $pdo->prepare($sql);
+        foreach($params as $key => $value) {
+            $stmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
+        $stmt->execute();
+
+        if($fetchMethod === null) $fetchMethod = self::$fetchMethod;
+
+        return $stmt->fetchAll($fetchMethod);
     }
 
     public static function Update(

@@ -66,34 +66,35 @@ class Usernames {
     /**
      * Fetch all usernames for a user (userQuery can be id, email, username, etc.).
      */
-    public static function fetchAll(int|string $userQuery, ?PDO $pdo = null): array {
+    public static function fetchAll(int|string $userQuery, ?int $fetchMethod = null, ?PDO $pdo = null): array {
         $pdo = self::getDatabase($pdo);
         $user_id = SearchUserID::Search($userQuery, $pdo);
         if($user_id === false) return [];
         if(is_null($fetchMethod)) $fetchMethod = self::$fetchMethod;
         $prep = $pdo->prepare('select * from '.self::$userTable.' where user_id = :user_id');
         $prep->execute(['user_id' => $user_id]);
-        return $prep->fetchAll(PDO::FETCH_OBJ);
+        return $prep->fetchAll($fetchMethod);
     }
 
     /**
      * Fetch the default username row for a user (userQuery).
      */
-    public static function fetchDefault(int|string $userQuery, ?PDO $pdo = null): false|object {
+    public static function fetchDefault(int|string $userQuery, ?int $fetchMethod = null, ?PDO $pdo = null): false|object {
         $pdo = self::getDatabase($pdo);
         $user_id = SearchUserID::Search($userQuery, $pdo);
         if($user_id === false) return false;
+        if(is_null($fetchMethod)) $fetchMethod = self::$fetchMethod;
         $prep = $pdo->prepare('select * from '.self::$userTable.' where user_id = :user_id and is_default = 1 limit 1');
         $prep->execute(['user_id' => $user_id]);
         if($prep->rowCount() == 0) return false;
-        return $prep->fetchObject();
+        return $prep->fetch($fetchMethod);
     }
 
     /**
      * Get the default username as a string for a user (userQuery).
      */
-    public static function getDefaultUsername(int|string $userQuery, ?PDO $pdo = null): ?string {
-        $row = self::fetchDefault($userQuery, $pdo);
+    public static function getDefaultUsername(int|string $userQuery, ?int $fetchMethod = null, ?PDO $pdo = null): ?string {
+        $row = self::fetchDefault($userQuery, $fetchMethod, $pdo);
         return $row && isset($row->username) ? $row->username : null;
     }
 
