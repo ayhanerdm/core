@@ -86,8 +86,8 @@ class ProfileFetchHelper {
         $db = self::getDatabase($db);
 
         // Get default email
-        $email = Emails::getDefaultEmail($profile->user_id ?? $profile['user_id'], $db);
-        $username = Usernames::getDefaultUsername($profile->user_id ?? $profile['user_id'], $db);
+        $email = Emails::getDefaultEmail($profile->user_id ?? $profile['user_id'], null, $db);
+        $username = Usernames::getDefaultUsername($profile->user_id ?? $profile['user_id'], null, $db);
 
         if(!is_object($profile) && !is_array($profile)) {
             throw new Exception('First argument of ' . __METHOD__ . ' must be an object or an array.');
