@@ -66,7 +66,7 @@ class Usernames {
     /**
      * Fetch all usernames for a user (userQuery can be id, email, username, etc.).
      */
-    public static function fetchAll(int|string $userQuery, ?int $fetchMethod = null, ?PDO $pdo = null): array {
+    public static function fetchAll(int|string $userQuery, ?PDO $pdo = null): array {
         $pdo = self::getDatabase($pdo);
         $user_id = SearchUserID::Search($userQuery, $pdo);
         if($user_id === false) return [];
