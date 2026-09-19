@@ -124,8 +124,6 @@ class ProfileFetchHelper {
             } elseif(!empty($profile['user_id'])) {
                 $profile['safe_public_display_name'] = md5($profile['user_id']);
             }
-            
-
 
             $profile['email'] = $email;
             $profile['username'] = $username;
