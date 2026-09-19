@@ -34,8 +34,6 @@ class ProfileFetchHelper {
     public ?string $short_biography = null;
     public ?string $long_biography = null;
 
-    public object|array|null $result = null;
-
     /**
      * Fetch a profile row by userQuery (user_id, email, username, etc.).
      */
