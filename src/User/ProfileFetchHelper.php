@@ -49,7 +49,7 @@ class ProfileFetchHelper {
         if($prep->rowCount() == 0) throw new \Exception('Profile not found.');
         $result = $prep->fetch($fetchMethod);
         $result = self::displayHelper($result, $pdo);
-        $this->result = $this->populateFromFetchResult($result);
+        $this->populateFromFetchResult($result);
     }
 
     public function getAvatarImage(bool $base64 = false): ?string {
@@ -185,44 +185,44 @@ class ProfileFetchHelper {
             }
         }
 
-    if(is_array($profile)) {
-        // display_name is a combination of first_name, middle_name, and last_name
-        $names = array_filter([
-        $profile['first_name'] ?? null,
-        $profile['middle_name'] ?? null,
-        $profile['last_name'] ?? null
-        ], fn($v) => !empty($v));
-        $profile['display_name'] = empty($names) ? null : trim(implode(' ', $names));
-
-        // safe_display_name is an array with 'public' and 'private' keys
-        $profile['safe_display_name'] = [];
-
-        if(!empty($profile['first_name']) || !empty($profile['middle_name']) || !empty($profile['last_name'])) {
-        $profile['safe_display_name']['public'] = trim(implode(' ', array_filter([
+        if(is_array($profile)) {
+            // display_name is a combination of first_name, middle_name, and last_name
+            $names = array_filter([
             $profile['first_name'] ?? null,
             $profile['middle_name'] ?? null,
             $profile['last_name'] ?? null
-        ])));
-        } elseif(!empty($profile['username'])) {
-        $profile['safe_display_name']['public'] = $profile['username'];
-        } elseif(!empty($profile['user_id'])) {
-        $profile['safe_display_name']['public'] = md5($profile['user_id']);
-        }
+            ], fn($v) => !empty($v));
+            $profile['display_name'] = empty($names) ? null : trim(implode(' ', $names));
 
-        if(!empty($profile['first_name']) || !empty($profile['middle_name']) || !empty($profile['last_name'])) {
-        $profile['safe_display_name']['private'] = trim(implode(' ', array_filter([
-            $profile['first_name'] ?? null,
-            $profile['middle_name'] ?? null,
-            $profile['last_name'] ?? null
-        ])));
-        } elseif(!empty($profile['username'])) {
-        $profile['safe_display_name']['private'] = $profile['username'];
-        } elseif(!empty($profile['email'])) {
-        $profile['safe_display_name']['private'] = $profile['email'];
-        } elseif(!empty($profile['user_id'])) {
-        $profile['safe_display_name']['private'] = md5($profile['user_id']);
+            // safe_display_name is an array with 'public' and 'private' keys
+            $profile['safe_display_name'] = [];
+
+            if(!empty($profile['first_name']) || !empty($profile['middle_name']) || !empty($profile['last_name'])) {
+            $profile['safe_display_name']['public'] = trim(implode(' ', array_filter([
+                $profile['first_name'] ?? null,
+                $profile['middle_name'] ?? null,
+                $profile['last_name'] ?? null
+            ])));
+            } elseif(!empty($profile['username'])) {
+            $profile['safe_display_name']['public'] = $profile['username'];
+            } elseif(!empty($profile['user_id'])) {
+            $profile['safe_display_name']['public'] = md5($profile['user_id']);
+            }
+
+            if(!empty($profile['first_name']) || !empty($profile['middle_name']) || !empty($profile['last_name'])) {
+            $profile['safe_display_name']['private'] = trim(implode(' ', array_filter([
+                $profile['first_name'] ?? null,
+                $profile['middle_name'] ?? null,
+                $profile['last_name'] ?? null
+            ])));
+            } elseif(!empty($profile['username'])) {
+            $profile['safe_display_name']['private'] = $profile['username'];
+            } elseif(!empty($profile['email'])) {
+            $profile['safe_display_name']['private'] = $profile['email'];
+            } elseif(!empty($profile['user_id'])) {
+            $profile['safe_display_name']['private'] = md5($profile['user_id']);
+            }
         }
-    }
 
         return $profile;
     }
