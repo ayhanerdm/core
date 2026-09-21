@@ -12,8 +12,10 @@ class SearchUserID
     private static UserTables $emailsTable = UserTables::UserEmails;
     private static UserTables $usernamesTable = UserTables::UserUsernames;
     private static UserTables $phonesTable = UserTables::UserPhones;
+    private static UserTables $socialsTable = UserTables::UserSocials;
 
     public static string $foundTable;
+    public static ?bool $needsLogin = null;
 
     /**
      * Search for a user ID in multiple tables based on the provided query.
@@ -28,7 +30,18 @@ class SearchUserID
     {
         if(is_null($userQuery) || empty($userQuery)) return false; // No query provided
 
-        foreach (['userAccounts', 'userEmails', 'userUsernames', /* 'userPhones' */] as $method) {
+        // Try to see if $_SESSION['user_id'] is set if the current user is trying to get their own data
+        // Show session content which should be user_id if session is set, return false otherwise.
+        // This means, a username cannot be "me" or "ben" ("ben" is me in Turkish), sorry Ben.
+        if($userQuery === 'me' || $userQuery === 'ben') {
+            if(isset($_SESSION['user_id'])) return $_SESSION['user_id'];
+            else {
+                self::$needsLogin = true;
+                return false;
+            }
+        }
+
+        foreach (['userAccounts', 'userEmails', 'userUsernames', 'userPhones', 'userSocials'] as $method) {
             if (($result = self::$method($userQuery, $pdo)) !== false) return $result;
         }
 
@@ -49,21 +62,21 @@ class SearchUserID
         $sql = 'select * from '. self::$accountsTable->value .' where '.
         'user_id = :query_user_id or md5(user_id) = :query_md5_user_id '. // User ID
         'or tg_id = :query_tg_id or md5(tg_id) = :query_md5_tg_id '; // Turkish Government ID
-        // 'or email = :query_email or md5(email) = :query_md5_email '. // Email
-        // 'or phone = :query_phone or md5(phone) = :query_md5_phone '. // Phone
-        // 'or username = :query_username or md5(username) = :query_md5_username'; // Username
+        'or email = :query_email or md5(email) = :query_md5_email '. // Email
+        'or phone = :query_phone or md5(phone) = :query_md5_phone '. // Phone
+        'or username = :query_username or md5(username) = :query_md5_username'; // Username
 
         $params = [
             ':query_user_id'      => $userQuery,
             ':query_md5_user_id'  => $userQuery,
             ':query_tg_id'        => $userQuery,
             ':query_md5_tg_id'    => $userQuery,
-            // ':query_email'        => $userQuery,
-            // ':query_md5_email'    => $userQuery,
-            // ':query_phone'        => $userQuery,
-            // ':query_md5_phone'    => $userQuery,
-            // ':query_username'     => $userQuery,
-            // ':query_md5_username' => $userQuery,
+            ':query_email'        => $userQuery,
+            ':query_md5_email'    => $userQuery,
+            ':query_phone'        => $userQuery,
+            ':query_md5_phone'    => $userQuery,
+            ':query_username'     => $userQuery,
+            ':query_md5_username' => $userQuery,
         ];
 
         $prep = $pdo->prepare($sql);
@@ -111,12 +124,11 @@ class SearchUserID
      */
     public static function userUsernames(int|string $userQuery, PDO $pdo): bool|int
     {
-        $sql = 'select * from '. self::$usernamesTable->value .' where username = :username or md5(username) = :usernameHash';
+        $sql = 'select * from '. self::$usernamesTable->value .' where username = :username or md5(username) = :username';
 
         $prep = $pdo->prepare($sql);
         $prep->execute([
             'username' => $userQuery,
-            'usernameHash' => $userQuery,
         ]);
 
         if($prep->rowCount() == 0) return false;
@@ -136,12 +148,28 @@ class SearchUserID
      */
     public static function userPhones(int|string $userQuery, PDO $pdo): bool|int
     {
-        $sql = 'select * from '. self::$phonesTable->value .' where phone = :phone or md5(phone) = :phoneHash';
+        // $sql = 'select * from '. self::$phonesTable->value .' where phone = :phone or md5(phone) = :phoneHash';
+        $sql = 'select * from ' . self::$phonesTable->value . ' where concat(country_code, subscriber_number, phone_number) = :phone or '
+               .'md5(concat(country_code, subscriber_number, phone_number)) = :phone';
 
         $prep = $pdo->prepare($sql);
         $prep->execute([
             'phone' => $userQuery,
-            'phoneHash' => $userQuery,
+        ]);
+
+        if($prep->rowCount() == 0) return false;
+        if($prep->rowCount() != 0) self::$foundTable = self::$phonesTable->value;
+
+        return $prep->fetch(PDO::FETCH_OBJ)?->user_id ?: false;
+    }
+
+    public static function userSocials(int|string $userQuery, PDO $pdo): bool|int {
+        $sql = 'select * from ' . self::$socialsTable->value . ' where provider_id = :provider_id or md5(provider_id) = :provider_id or '
+               .'provider_username = :provider_id or md5(provider_username) = :provider_id';
+
+        $prep = $pdo->prepare($sql);
+        $prep->execute([
+            'provider_id' => $userQuery,
         ]);
 
         if($prep->rowCount() == 0) return false;
