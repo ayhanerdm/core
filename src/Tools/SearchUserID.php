@@ -59,15 +59,24 @@ class SearchUserID
      */
     public static function userAccounts(int|string $userQuery, PDO $pdo): bool|int
     {
-        $sql = 'select * from '. self::$accountsTable->value .' where '.
-        'user_id = :userQuery or md5(user_id) = :userQuery '. // User ID
-        'or tg_id = :userQuery or md5(tg_id) = :userQuery '; // Turkish Government ID
-        'or email = :userQuery or md5(email) = :userQuery '. // Email
-        'or phone = :userQuery or md5(phone) = :userQuery '. // Phone
-        'or username = :userQuery or md5(username) = :userQuery'; // Username
+        $sql = 'SELECT * FROM '. self::$accountsTable->value .' WHERE '.
+        'user_id = :uq1 or md5(user_id) = :uq2 '. 
+        'or tg_id = :uq3 or md5(tg_id) = :uq4 '. 
+        'or email = :uq5 or md5(email) = :uq6 '. 
+        'or phone = :uq7 or md5(phone) = :uq8 '. 
+        'or username = :uq9 or md5(username) = :uq10'; 
 
         $params = [
-            ':userQuery' => $userQuery,
+            ':uq1'  => $userQuery,
+            ':uq2'  => $userQuery,
+            ':uq3'  => $userQuery,
+            ':uq4'  => $userQuery,
+            ':uq5'  => $userQuery,
+            ':uq6'  => $userQuery,
+            ':uq7'  => $userQuery,
+            ':uq8'  => $userQuery,
+            ':uq9'  => $userQuery,
+            ':uq10' => $userQuery,
         ];
 
         $prep = $pdo->prepare($sql);
@@ -115,11 +124,12 @@ class SearchUserID
      */
     public static function userUsernames(int|string $userQuery, PDO $pdo): bool|int
     {
-        $sql = 'select * from '. self::$usernamesTable->value .' where username = :username or md5(username) = :username';
+        $sql = 'select * from '. self::$usernamesTable->value .' where username = :username or md5(username) = :usernameHash';
 
         $prep = $pdo->prepare($sql);
         $prep->execute([
             'username' => $userQuery,
+            'usernameHash' => $userQuery,
         ]);
 
         if($prep->rowCount() == 0) return false;
@@ -141,11 +151,12 @@ class SearchUserID
     {
         // $sql = 'select * from '. self::$phonesTable->value .' where phone = :phone or md5(phone) = :phoneHash';
         $sql = 'select * from ' . self::$phonesTable->value . ' where concat(country_code, subscriber_number, phone_number) = :phone or '
-               .'md5(concat(country_code, subscriber_number, phone_number)) = :phone';
+               .'md5(concat(country_code, subscriber_number, phone_number)) = :phoneHash';
 
         $prep = $pdo->prepare($sql);
         $prep->execute([
             'phone' => $userQuery,
+            'phoneHash' => $userQuery,
         ]);
 
         if($prep->rowCount() == 0) return false;
@@ -155,12 +166,15 @@ class SearchUserID
     }
 
     public static function userSocials(int|string $userQuery, PDO $pdo): bool|int {
-        $sql = 'select * from ' . self::$socialsTable->value . ' where provider_id = :provider_id or md5(provider_id) = :provider_id or '
-               .'provider_username = :provider_id or md5(provider_username) = :provider_id';
+        $sql = 'select * from ' . self::$socialsTable->value . ' where provider_id = :provider_id or md5(provider_id) = :provider_idHash or '
+               .'provider_username = :provider_username or md5(provider_username) = :provider_usernameHash';
 
         $prep = $pdo->prepare($sql);
         $prep->execute([
             'provider_id' => $userQuery,
+            'provider_idHash' => $userQuery,
+            'provider_username' => $userQuery,
+            'provider_usernameHash' => $userQuery,
         ]);
 
         if($prep->rowCount() == 0) return false;
