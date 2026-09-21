@@ -62,7 +62,7 @@ class SearchUserID
         $sql = 'select * from '. self::$accountsTable->value .' where '.
         'user_id = :userQuery or md5(user_id) = :userQuery '. // User ID
         'or tg_id = :userQuery or md5(tg_id) = :userQuery '; // Turkish Government ID
-        'or email = :userQuery or md5(email) = ::userQuery '. // Email
+        'or email = :userQuery or md5(email) = :userQuery '. // Email
         'or phone = :userQuery or md5(phone) = :userQuery '. // Phone
         'or username = :userQuery or md5(username) = :userQuery'; // Username
 
