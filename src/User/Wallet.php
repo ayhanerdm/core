@@ -42,7 +42,7 @@ class Wallet {
     /**
      * Fetch a wallet row by userQuery (user_id, email, username, etc.).
      */
-    public static function Fetch(int|string $userQuery, ?PDO $pdo = null, ?int $fetchMethod = null): false|object|array {
+    public static function Fetch(int|string $userQuery, ?int $fetchMethod = null, ?PDO $pdo = null): false|object|array {
         $pdo = self::getDatabase($pdo);
         $user_id = SearchUserID::Search($userQuery, $pdo);
         if($user_id === false) return false;
