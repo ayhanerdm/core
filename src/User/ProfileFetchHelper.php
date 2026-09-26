@@ -33,6 +33,9 @@ class ProfileFetchHelper {
     public ?string $pronouns = null;
     public ?string $short_biography = null;
     public ?string $long_biography = null;
+    public ?string $created_at = null;
+    public ?string $updated_at = null;
+    public ?string $deleted_at = null;
 
     /**
      * Fetch a profile row by userQuery (user_id, email, username, etc.).
