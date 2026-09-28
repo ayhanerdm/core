@@ -93,8 +93,6 @@ class ProfileFetchHelper {
         if(!is_object($profile) && !is_array($profile)) {
             throw new Exception('First argument of ' . __METHOD__ . ' must be an object or an array.');
         }
-
-        $profile = self::displayNameHelper($profile);
     
         if(is_object($profile)) {
             
@@ -104,29 +102,13 @@ class ProfileFetchHelper {
             $profile->handle = !empty($username) ? $username : md5($profile->user_id);
 
             $profile->profile_url = 'https://'. Domain::getDomain(). '/' .$profile->handle;
-            $profile->avatar_url = 'https://'. Domain::getDomain().'/api/user/'. $profile->handle . '/avatar';
-            $profile->cover_url = 'https://'. Domain::getDomain().'/api/user/'. $profile->handle . '/cover';
+            $profile->avatar_url = 'https://'. Domain::getDomain().'/api/users/'. $profile->handle . '/avatar';
+            $profile->cover_url = 'https://'. Domain::getDomain().'/api/users/'. $profile->handle . '/cover';
             $profile->gravatar_url = 'https://www.gravatar.com/avatar/'. md5(strtolower(trim($email))) . '?d=identicon';
         }
 
         if(is_array($profile)) {
-            // If fetch method is FETCH_ASSOC, add display_name key
-            $profile['display_name'] = trim(implode(' ', array_filter([$profile['first_name'], $profile['middle_name'], $profile['last_name']])));
 
-            $profile['safe_public_display_name'] = null;
-            if(!empty($profile['first_name']) || !empty($profile['middle_name']) || !empty($profile['last_name'])) {
-                $profile['safe_public_display_name'] = trim(implode(' ', array_filter([
-                    $profile['first_name'] ?? null,
-                    $profile['middle_name'] ?? null,
-                    $profile['last_name'] ?? null
-                ])));
-            } elseif(!empty($username)) {
-                $profile['safe_public_display_name'] = $username;
-            } elseif(!empty($email)) {
-                $profile['safe_public_display_name'] = $email;
-            } elseif(!empty($profile['user_id'])) {
-                $profile['safe_public_display_name'] = md5($profile['user_id']);
-            }
 
             $profile['email'] = $email;
             $profile['username'] = $username;
@@ -134,93 +116,9 @@ class ProfileFetchHelper {
             $profile['handle'] = !empty($username) ? $username : md5($profile['user_id']);
 
             $profile['profile_url'] = 'https://'. Domain::getDomain(). '/' .$profile['handle'];
-            $profile['avatar_url'] = 'https://api.'. Domain::getDomain().'/user/'. $profile['handle'] . '/avatar';
-            $profile['cover_url'] = 'https://api.'. Domain::getDomain().'/user/'. $profile['handle'] . '/cover';
+            $profile['avatar_url'] = 'https://api.'. Domain::getDomain().'/users/'. $profile['handle'] . '/avatar';
+            $profile['cover_url'] = 'https://api.'. Domain::getDomain().'/users/'. $profile['handle'] . '/cover';
             $profile['gravatar_url'] = 'https://www.gravatar.com/avatar/'. md5(strtolower(trim($email)));
-        }
-
-        return $profile;
-    }
-
-    public static function displayNameHelper(object|array $profile): object|array {
-        if(is_object($profile)) {
-            // display_name is a combination of first_name, middle_name, and last_name
-            $names = array_filter([
-                $profile->first_name ?? null,
-                $profile->middle_name ?? null,
-                $profile->last_name ?? null
-            ], fn($v) => !empty($v) );
-            $profile->display_name = empty($names) ? null : trim(implode(' ', $names));
-
-            // safe_public_display_name is a string that works if any of the names are empty and for public display
-            $profile->safe_display_name = new stdClass();
-            if(!empty($profile->first_name) || !empty($profile->middle_name) || !empty($profile->last_name)) {
-                $profile->safe_display_name->public = trim(implode(' ', array_filter([
-                    $profile->first_name ?? null,
-                    $profile->middle_name ?? null,
-                    $profile->last_name ?? null
-                ])));
-            } elseif(!empty($username)) {
-                $profile->safe_display_name->public = $username;
-            } elseif(!empty($profile->user_id)) {
-                $profile->safe_display_name->public = md5($profile->user_id);
-            }
-
-            // safe_private_display_name is a string that works if any of the names are empty and for private display
-            // It is used to show user themselves in private contexts
-            $profile->safe_display_name->private = new stdClass();
-            if(!empty($profile->first_name) || !empty($profile->middle_name) || !empty($profile->last_name)) {
-                $profile->safe_display_name->private = trim(implode(' ', array_filter([
-                    $profile->first_name ?? null,
-                    $profile->middle_name ?? null,
-                    $profile->last_name ?? null
-                ])));
-            } elseif(!empty($username)) {
-                $profile->safe_display_name->private = $username;
-            } elseif(!empty($email)) {
-                $profile->safe_display_name->private = $email;
-            } elseif(!empty($profile->user_id)) {
-                $profile->safe_display_name->private = md5($profile->user_id);
-            }
-        }
-
-        if(is_array($profile)) {
-            // display_name is a combination of first_name, middle_name, and last_name
-            $names = array_filter([
-            $profile['first_name'] ?? null,
-            $profile['middle_name'] ?? null,
-            $profile['last_name'] ?? null
-            ], fn($v) => !empty($v));
-            $profile['display_name'] = empty($names) ? null : trim(implode(' ', $names));
-
-            // safe_display_name is an array with 'public' and 'private' keys
-            $profile['safe_display_name'] = [];
-
-            if(!empty($profile['first_name']) || !empty($profile['middle_name']) || !empty($profile['last_name'])) {
-            $profile['safe_display_name']['public'] = trim(implode(' ', array_filter([
-                $profile['first_name'] ?? null,
-                $profile['middle_name'] ?? null,
-                $profile['last_name'] ?? null
-            ])));
-            } elseif(!empty($profile['username'])) {
-            $profile['safe_display_name']['public'] = $profile['username'];
-            } elseif(!empty($profile['user_id'])) {
-            $profile['safe_display_name']['public'] = md5($profile['user_id']);
-            }
-
-            if(!empty($profile['first_name']) || !empty($profile['middle_name']) || !empty($profile['last_name'])) {
-            $profile['safe_display_name']['private'] = trim(implode(' ', array_filter([
-                $profile['first_name'] ?? null,
-                $profile['middle_name'] ?? null,
-                $profile['last_name'] ?? null
-            ])));
-            } elseif(!empty($profile['username'])) {
-            $profile['safe_display_name']['private'] = $profile['username'];
-            } elseif(!empty($profile['email'])) {
-            $profile['safe_display_name']['private'] = $profile['email'];
-            } elseif(!empty($profile['user_id'])) {
-            $profile['safe_display_name']['private'] = md5($profile['user_id']);
-            }
         }
 
         return $profile;
