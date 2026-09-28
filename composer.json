@@ -6,7 +6,7 @@
             "ayhanerdm\\Core\\": "src/"
         },
         "files": [
-            "Functions.php"
+            "src/Functions.php"
         ]
     },
     "authors": [
