@@ -13,12 +13,12 @@ class ProfileFetchHelper {
     private static int $insertedUserID = 0;
 
     public int $user_id = 0;
+    public ?string $uuid = null;
     public ?string $title = null;
     public ?string $first_name = null;
     public ?string $middle_name = null;
     public ?string $last_name = null;
     public ?string $display_name = null;
-    public null|object|array $safe_display_name = null; // Contains 'public' and 'private' keys
     public ?string $email = null;
     public ?string $username = null;
     public ?string $handle = null; // Username or md5(user_id) if username is not set
