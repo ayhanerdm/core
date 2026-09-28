@@ -2,6 +2,7 @@
 namespace ayhanerdm\Core\Tools;
 
 use ayhanerdm\Core\Enums\UserTables;
+use isBase64;
 use \PDO;
 
 class SearchUserID
@@ -59,12 +60,17 @@ class SearchUserID
      */
     public static function userAccounts(int|string $userQuery, PDO $pdo): bool|int
     {
+        if(isBase64($userQuery)) {
+            $decodedUserQuery = base64_decode($userQuery, true);
+        }
+
         $sql = 'SELECT * FROM '. self::$accountsTable->value .' WHERE '.
-        'user_id = :uq1 or md5(user_id) = :uq2 '. 
-        'or tg_id = :uq3 or md5(tg_id) = :uq4 '. 
-        'or email = :uq5 or md5(email) = :uq6 '. 
-        'or phone = :uq7 or md5(phone) = :uq8 '. 
-        'or username = :uq9 or md5(username) = :uq10'; 
+        'user_id = :uq1 or md5(user_id) = :uq2 or sha2(user_id, 256) = :uq3'.
+        'or uuid = :uq4 or md5(uuid) = :uq5 or sha2(uuid, 256) = :uq6 or uuid = :uq7'.
+        'or tg_id = :uq8 or md5(tg_id) = :uq9 '.
+        'or email = :uq10 or md5(email) = :uq11 or sha2(email, 256) = :uq12 '.
+        'or phone = :uq13 or md5(phone) = :uq14 or sha2(phone, 256) = :uq15'.
+        'or username = :uq16 or md5(username) = :uq17 or sha2(username, 256) = :uq18'; 
 
         $params = [
             ':uq1'  => $userQuery,
@@ -73,10 +79,18 @@ class SearchUserID
             ':uq4'  => $userQuery,
             ':uq5'  => $userQuery,
             ':uq6'  => $userQuery,
-            ':uq7'  => $userQuery,
+            ':uq7'  => $decodedUserQuery ?? $userQuery,
             ':uq8'  => $userQuery,
             ':uq9'  => $userQuery,
             ':uq10' => $userQuery,
+            ':uq11' => $userQuery,
+            ':uq12' => $userQuery,
+            ':uq13' => $userQuery,
+            ':uq14' => $userQuery,
+            ':uq15' => $userQuery,
+            ':uq16' => $userQuery,
+            ':uq17' => $userQuery,
+            ':uq18' => $userQuery,
         ];
 
         $prep = $pdo->prepare($sql);

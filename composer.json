@@ -4,7 +4,10 @@
     "autoload": {
         "psr-4": {
             "ayhanerdm\\Core\\": "src/"
-        }
+        },
+        "files": [
+            "Functions.php"
+        ]
     },
     "authors": [
         {
