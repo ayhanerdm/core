@@ -65,11 +65,11 @@ class SearchUserID
         }
 
         $sql = 'SELECT * FROM '. self::$accountsTable->value .' WHERE '.
-        'user_id = :uq1 or md5(user_id) = :uq2 or sha2(user_id, 256) = :uq3'.
-        'or uuid = :uq4 or md5(uuid) = :uq5 or sha2(uuid, 256) = :uq6 or uuid = :uq7'.
+        'user_id = :uq1 or md5(user_id) = :uq2 or sha2(user_id, 256) = :uq3 '.
+        'or uuid = :uq4 or md5(uuid) = :uq5 or sha2(uuid, 256) = :uq6 or uuid = :uq7 '.
         'or tg_id = :uq8 or md5(tg_id) = :uq9 '.
         'or email = :uq10 or md5(email) = :uq11 or sha2(email, 256) = :uq12 '.
-        'or phone = :uq13 or md5(phone) = :uq14 or sha2(phone, 256) = :uq15'.
+        'or phone = :uq13 or md5(phone) = :uq14 or sha2(phone, 256) = :uq15 '.
         'or username = :uq16 or md5(username) = :uq17 or sha2(username, 256) = :uq18'; 
 
         $params = [
