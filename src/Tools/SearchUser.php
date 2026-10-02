@@ -5,7 +5,7 @@ use ayhanerdm\Core\Enums\UserTables;
 use isBase64;
 use \PDO;
 
-class SearchUserID
+class SearchUser
 {
     private static PDO $pdo;
 
