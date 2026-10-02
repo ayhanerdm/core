@@ -102,11 +102,11 @@ class Account {
      */
     public static function Fetch(int|string $userQuery, ?int $fetchMethod = null, ?PDO $pdo = null): false|object|array {
         $pdo = self::getDatabase($pdo);
-        $user_id = SearchUserID::Search($userQuery, $pdo);
-        if($user_id === false) return false;
+        $user_uuid = SearchUserID::Search($userQuery, $pdo);
+        if($user_uuid === false) return false;
         if($fetchMethod === null) $fetchMethod = self::$fetchMethod;
-        $prep = $pdo->prepare('select * from '.self::$userTable.' where user_id = :user_id limit 1');
-        $prep->execute(['user_id' => $user_id]);
+        $prep = $pdo->prepare('select * from '.self::$userTable.' where user_uuid = :user_uuid limit 1');
+        $prep->execute(['user_uuid' => $user_uuid]);
         if($prep->rowCount() == 0) return false;
         $result = $prep->fetch($fetchMethod);
 
