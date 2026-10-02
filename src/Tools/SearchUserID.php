@@ -16,6 +16,7 @@ class SearchUserID
     private static UserTables $socialsTable = UserTables::UserSocials;
 
     public static string $foundTable;
+    public static ?string $uuid = null;
     public static ?bool $needsLogin = null;
 
     /**
@@ -32,10 +33,11 @@ class SearchUserID
         if(is_null($userQuery) || empty($userQuery)) return false; // No query provided
 
         // Try to see if $_SESSION['user_id'] is set if the current user is trying to get their own data
-        // Show session content which should be user_id if session is set, return false otherwise.
+        // Show session content which should be user_uuid if session is set, return false otherwise.
         // This means, a username cannot be "me" or "ben" ("ben" is me in Turkish), sorry Ben.
         if($userQuery === 'me' || $userQuery === 'ben') {
-            if(isset($_SESSION['user_id'])) return $_SESSION['user_id'];
+            if(isset($_SESSION['user_uuid'])) return $_SESSION['user_uuid'];
+            elseif(isset($_SESSION['user_id'])) return $_SESSION['user_id'];
             else {
                 self::$needsLogin = true;
                 return false;
@@ -83,7 +85,7 @@ class SearchUserID
         if($prep->rowCount() == 0) return false;
         if($prep->rowCount() != 0) self::$foundTable = self::$accountsTable->value;
 
-        return $prep->fetch(\PDO::FETCH_OBJ)?->user_id ?: false;
+        return $prep->fetch(\PDO::FETCH_OBJ)?->user_uuid ?: false;
     }
 
     /**
@@ -109,7 +111,7 @@ class SearchUserID
         if($prep->rowCount() == 0) return false;
         if($prep->rowCount() != 0) self::$foundTable = self::$emailsTable->value;
 
-        return $prep->fetch(PDO::FETCH_OBJ)?->user_id ?: false;
+        return $prep->fetch(PDO::FETCH_OBJ)?->user_uuid ?: false;
     }
 
     /**
@@ -135,7 +137,7 @@ class SearchUserID
         if($prep->rowCount() == 0) return false;
         if($prep->rowCount() != 0) self::$foundTable = self::$usernamesTable->value;
 
-        return $prep->fetch(PDO::FETCH_OBJ)?->user_id ?: false;
+        return $prep->fetch(PDO::FETCH_OBJ)?->user_uuid ?: false;
     }
 
     /**
@@ -163,7 +165,7 @@ class SearchUserID
         if($prep->rowCount() == 0) return false;
         if($prep->rowCount() != 0) self::$foundTable = self::$phonesTable->value;
 
-        return $prep->fetch(PDO::FETCH_OBJ)?->user_id ?: false;
+        return $prep->fetch(PDO::FETCH_OBJ)?->user_uuid ?: false;
     }
 
     public static function userSocials(int|string $userQuery, PDO $pdo): bool|int {
@@ -179,6 +181,6 @@ class SearchUserID
         if($prep->rowCount() == 0) return false;
         if($prep->rowCount() != 0) self::$foundTable = self::$socialsTable->value;
 
-        return $prep->fetch(PDO::FETCH_OBJ)?->user_id ?: false;
+        return $prep->fetch(PDO::FETCH_OBJ)?->user_uuid ?: false;
     }
 }
