@@ -68,11 +68,11 @@ class Usernames {
      */
     public static function fetchAll(int|string $userQuery, ?int $fetchMethod = null, ?PDO $pdo = null): array {
         $pdo = self::getDatabase($pdo);
-        $user_id = SearchUserID::Search($userQuery, $pdo);
-        if($user_id === false) return [];
+        $user_uuid = SearchUserID::Search($userQuery, $pdo);
+        if($user_uuid === false) return [];
         if(is_null($fetchMethod)) $fetchMethod = self::$fetchMethod;
         $prep = $pdo->prepare('select * from '.self::$userTable.' where user_id = :user_id');
-        $prep->execute(['user_id' => $user_id]);
+        $prep->execute(['user_uuid' => $user_uuid]);
         return $prep->fetchAll($fetchMethod);
     }
 
@@ -81,11 +81,11 @@ class Usernames {
      */
     public static function fetchDefault(int|string $userQuery, ?int $fetchMethod = null, ?PDO $pdo = null): false|object {
         $pdo = self::getDatabase($pdo);
-        $user_id = SearchUserID::Search($userQuery, $pdo);
-        if($user_id === false) return false;
+        $user_uuid = SearchUserID::Search($userQuery, $pdo);
+        if($user_uuid === false) return false;
         if(is_null($fetchMethod)) $fetchMethod = self::$fetchMethod;
-        $prep = $pdo->prepare('select * from '.self::$userTable.' where user_id = :user_id and is_default = 1 limit 1');
-        $prep->execute(['user_id' => $user_id]);
+        $prep = $pdo->prepare('select * from '.self::$userTable.' where user_uuid = :user_uuid and is_default = 1 limit 1');
+        $prep->execute(['user_uuid' => $user_uuid]);
         if($prep->rowCount() == 0) return false;
         return $prep->fetch($fetchMethod);
     }
