@@ -8,9 +8,10 @@ use PDO, Exception, stdClass;
 class ProfileFetchHelper {
     use \ayhanerdm\Core\Traits\ConnectsDatabase;
 
-    private static string $userTable = 'user_profiles';
     private static PDO $insertedPDO;
-    private static int $insertedUserID = 0;
+
+    private static string $userTable = 'user_profiles';
+    private static ?string $inserted_user_uuid = null;
 
     public int $user_id = 0;
     public ?string $uuid = null;
@@ -43,7 +44,7 @@ class ProfileFetchHelper {
     public function __construct(int|string $userQuery, ?int $fetchMethod = null, ?PDO $pdo = null) {
         self::$insertedPDO = $pdo = self::getDatabase($pdo);
         $user_uuid = SearchUserID::Search($userQuery, $pdo);
-        if($user_uuid === false) return false; else self::$insertedUserID = $user_uuid;
+        if($user_uuid === false) return false; else self::$inserted_user_uuid = $user_uuid;
         if(is_null($fetchMethod)) $fetchMethod = self::$fetchMethod;
         $prep = $pdo->prepare('select * from '.self::$userTable.' where user_uuid = :user_uuid limit 1');
         $prep->execute(['user_uuid' => $user_uuid]);
@@ -55,7 +56,7 @@ class ProfileFetchHelper {
 
     public function getAvatarImage(bool $base64 = false): ?string {
         $prep = self::$insertedPDO->prepare('select * from '.self::$userTable.' where user_uuid = :user_uuid limit 1');
-        $prep->execute(['user_uuid' => self::$insertedUserID]);
+        $prep->execute(['user_uuid' => self::$inserted_user_uuid]);
         if($prep->rowCount() == 0) return null;
         $result = $prep->fetch(PDO::FETCH_OBJ);
 
@@ -70,7 +71,7 @@ class ProfileFetchHelper {
 
     public function getCoverImage(bool $base64 = false): ?string {
         $prep = self::$insertedPDO->prepare('select * from '.self::$userTable.' where user_uuid = :user_uuid limit 1');
-        $prep->execute(['user_uuid' => self::$insertedUserID]);
+        $prep->execute(['user_uuid' => self::$inserted_user_uuid]);
         if($prep->rowCount() == 0) return null;
         $result = $prep->fetch(PDO::FETCH_OBJ);
 
@@ -99,12 +100,12 @@ class ProfileFetchHelper {
             $profile->email = $email;
             $profile->username = $username;
 
-            $profile->handle = !empty($username) ? $username : md5($profile->user_uuid);
+            $profile->handle = !empty($username) ? $username : hash('sha256', $profile->user_uuid);
 
             $profile->profile_url = 'https://'. Domain::getDomain(). '/' .$profile->handle;
             $profile->avatar_url = 'https://'. Domain::getDomain().'/api/users/'. $profile->handle . '/avatar';
             $profile->cover_url = 'https://'. Domain::getDomain().'/api/users/'. $profile->handle . '/cover';
-            $profile->gravatar_url = 'https://www.gravatar.com/avatar/'. md5(strtolower(trim($email))) . '?d=identicon';
+            $profile->gravatar_url = 'https://www.gravatar.com/avatar/'. md5(strtolower(trim($email)));
         }
 
         if(is_array($profile)) {
@@ -113,7 +114,7 @@ class ProfileFetchHelper {
             $profile['email'] = $email;
             $profile['username'] = $username;
 
-            $profile['handle'] = !empty($username) ? $username : md5($profile['user_uuid']);
+            $profile['handle'] = !empty($username) ? $username : hash('sha256', $profile['user_uuid']);
 
             $profile['profile_url'] = 'https://'. Domain::getDomain(). '/' .$profile['handle'];
             $profile['avatar_url'] = 'https://api.'. Domain::getDomain().'/users/'. $profile['handle'] . '/avatar';
