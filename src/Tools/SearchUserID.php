@@ -65,14 +65,14 @@ class SearchUserID
         if(isBase64($userQuery)) $userQuery = base64_decode($userQuery, true);
 
         $sql = 'SELECT * FROM '. self::$accountsTable->value .' WHERE '.
-        'uuid = :uuid or md5(uuid) = :uuid_md5 or sha2(uuid, 256) = :uuid_sha256 '.
+        'user_uuid = :user_uuid or md5(user_uuid) = :user_uuid_md5 or sha2(user_uuid, 256) = :user_uuid_sha256 '.
         'or tg_id = :tg_id or md5(tg_id) = :tg_id_md5 or sha2(tg_id, 256) = :tg_id_sha256 '.
         'or email = :email or md5(email) = :email_md5 or sha2(email, 256) = :email_sha256 '.
         'or phone = :phone or md5(phone) = :phone_md5 or sha2(phone, 256) = :phone_sha256 '.
         'or username = :username or md5(username) = :username_md5 or sha2(username, 256) = :username_sha256'; 
 
         $params = [
-            ':uuid' => $userQuery, ':uuid_md5' => $userQuery, ':uuid_sha256' => $userQuery,
+            ':user_uuid' => $userQuery, ':user_uuid_md5' => $userQuery, ':user_uuid_sha256' => $userQuery,
             ':tg_id' => $userQuery, ':tg_id_md5' => $userQuery, ':tg_id_sha256' => $userQuery,
             ':email' => $userQuery, ':email_md5' => $userQuery, ':email_sha256' => $userQuery,
             ':phone' => $userQuery, ':phone_md5' => $userQuery, ':phone_sha256' => $userQuery,
