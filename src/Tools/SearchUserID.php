@@ -28,8 +28,7 @@ class SearchUserID
      * @param PDO $pdo The PDO instance to use for database operations.
      * @return bool|int The user ID if found, false otherwise.
      */
-    public static function Search(null|int|string $userQuery, PDO $pdo): bool|int
-    {
+    public static function Search(null|int|string $userQuery, PDO $pdo): bool|string{
         if(is_null($userQuery) || empty($userQuery)) return false; // No query provided
 
         // Try to see if $_SESSION['user_id'] is set if the current user is trying to get their own data
@@ -60,8 +59,7 @@ class SearchUserID
      * @param PDO $pdo The PDO instance to use for database operations.
      * @return bool|int The user ID if found, false otherwise.
      */
-    public static function userAccounts(int|string $userQuery, PDO $pdo): bool|int
-    {
+    public static function userAccounts(int|string $userQuery, PDO $pdo): bool|string {
         if(isBase64($userQuery)) $userQuery = base64_decode($userQuery, true);
 
         $sql = 'SELECT * FROM '. self::$accountsTable->value .' WHERE '.
@@ -97,8 +95,7 @@ class SearchUserID
      * @param PDO $pdo The PDO instance to use for database operations.
      * @return bool|int The user ID if found, false otherwise.
      */
-    public static function userEmails(int|string $userQuery, PDO $pdo): bool|int
-    {
+    public static function userEmails(int|string $userQuery, PDO $pdo): bool|string {
         $sql = 'select * from '. self::$emailsTable->value .' where email = :email or md5(email) = :email_md5 or sha2(email, 256) = :email_sha256';
 
         $prep = $pdo->prepare($sql);
@@ -123,8 +120,7 @@ class SearchUserID
      * @param PDO $pdo The PDO instance to use for database operations.
      * @return bool|int The user ID if found, false otherwise.
      */
-    public static function userUsernames(int|string $userQuery, PDO $pdo): bool|int
-    {
+    public static function userUsernames(int|string $userQuery, PDO $pdo): bool|string {
         $sql = 'select * from '. self::$usernamesTable->value .' where username = :username or md5(username) = :username_md5 or sha2(username, 256) = :username_sha256';
 
         $prep = $pdo->prepare($sql);
@@ -149,8 +145,7 @@ class SearchUserID
      * @param PDO $pdo The PDO instance to use for database operations.
      * @return bool|int The user ID if found, false otherwise.
      */
-    public static function userPhones(int|string $userQuery, PDO $pdo): bool|int
-    {
+    public static function userPhones(int|string $userQuery, PDO $pdo): bool|string {
         // $sql = 'select * from '. self::$phonesTable->value .' where phone = :phone or md5(phone) = :phoneHash';
         $sql = 'select * from ' . self::$phonesTable->value . ' where concat(country_code, subscriber_number, phone_number) = :phone or '
                .'md5(concat(country_code, subscriber_number, phone_number)) = :phone_md5 or sha2(concat(country_code, subscriber_number, phone_number), 256) = :phone_sha256';
@@ -168,7 +163,7 @@ class SearchUserID
         return $prep->fetch(PDO::FETCH_OBJ)?->user_uuid ?: false;
     }
 
-    public static function userSocials(int|string $userQuery, PDO $pdo): bool|int {
+    public static function userSocials(int|string $userQuery, PDO $pdo): bool|string {
         $sql = 'select * from ' . self::$socialsTable->value . ' where provider_id = :provider_id or md5(provider_id) = :provider_id_md5 or sha2(provider_id, 256) = :provider_id_sha256 or '
                .'provider_username = :provider_username or md5(provider_username) = :provider_username_md5 or sha2(provider_username, 256) = :provider_username_sha256';
 
