@@ -42,11 +42,11 @@ class ProfileFetchHelper {
      */
     public function __construct(int|string $userQuery, ?int $fetchMethod = null, ?PDO $pdo = null) {
         self::$insertedPDO = $pdo = self::getDatabase($pdo);
-        $user_id = SearchUserID::Search($userQuery, $pdo);
-        if($user_id === false) return false; else self::$insertedUserID = $user_id;
+        $user_uuid = SearchUserID::Search($userQuery, $pdo);
+        if($user_uuid === false) return false; else self::$insertedUserID = $user_uuid;
         if(is_null($fetchMethod)) $fetchMethod = self::$fetchMethod;
-        $prep = $pdo->prepare('select * from '.self::$userTable.' where user_id = :user_id limit 1');
-        $prep->execute(['user_id' => $user_id]);
+        $prep = $pdo->prepare('select * from '.self::$userTable.' where user_uuid = :user_uuid limit 1');
+        $prep->execute(['user_uuid' => $user_uuid]);
         if($prep->rowCount() == 0) throw new \Exception('Profile not found.');
         $result = $prep->fetch($fetchMethod);
         $result = self::displayHelper($result, $pdo);
@@ -54,8 +54,8 @@ class ProfileFetchHelper {
     }
 
     public function getAvatarImage(bool $base64 = false): ?string {
-        $prep = self::$insertedPDO->prepare('select * from '.self::$userTable.' where user_id = :user_id limit 1');
-        $prep->execute(['user_id' => self::$insertedUserID]);
+        $prep = self::$insertedPDO->prepare('select * from '.self::$userTable.' where user_uuid = :user_uuid limit 1');
+        $prep->execute(['user_uuid' => self::$insertedUserID]);
         if($prep->rowCount() == 0) return null;
         $result = $prep->fetch(PDO::FETCH_OBJ);
 
@@ -69,8 +69,8 @@ class ProfileFetchHelper {
     }
 
     public function getCoverImage(bool $base64 = false): ?string {
-        $prep = self::$insertedPDO->prepare('select * from '.self::$userTable.' where user_id = :user_id limit 1');
-        $prep->execute(['user_id' => self::$insertedUserID]);
+        $prep = self::$insertedPDO->prepare('select * from '.self::$userTable.' where user_uuid = :user_uuid limit 1');
+        $prep->execute(['user_uuid' => self::$insertedUserID]);
         if($prep->rowCount() == 0) return null;
         $result = $prep->fetch(PDO::FETCH_OBJ);
 
@@ -87,8 +87,8 @@ class ProfileFetchHelper {
         $db = self::getDatabase($db);
 
         // Get default email
-        $email = Emails::getDefaultEmail($profile->user_id ?? $profile['user_id'], null, $db);
-        $username = Usernames::getDefaultUsername($profile->user_id ?? $profile['user_id'], null, $db);
+        $email = Emails::getDefaultEmail($profile->user_id ?? $profile['user_uuid'], null, $db);
+        $username = Usernames::getDefaultUsername($profile->user_id ?? $profile['user_uuid'], null, $db);
 
         if(!is_object($profile) && !is_array($profile)) {
             throw new Exception('First argument of ' . __METHOD__ . ' must be an object or an array.');
@@ -99,7 +99,7 @@ class ProfileFetchHelper {
             $profile->email = $email;
             $profile->username = $username;
 
-            $profile->handle = !empty($username) ? $username : md5($profile->user_id);
+            $profile->handle = !empty($username) ? $username : md5($profile->user_uuid);
 
             $profile->profile_url = 'https://'. Domain::getDomain(). '/' .$profile->handle;
             $profile->avatar_url = 'https://'. Domain::getDomain().'/api/users/'. $profile->handle . '/avatar';
@@ -113,7 +113,7 @@ class ProfileFetchHelper {
             $profile['email'] = $email;
             $profile['username'] = $username;
 
-            $profile['handle'] = !empty($username) ? $username : md5($profile['user_id']);
+            $profile['handle'] = !empty($username) ? $username : md5($profile['user_uuid']);
 
             $profile['profile_url'] = 'https://'. Domain::getDomain(). '/' .$profile['handle'];
             $profile['avatar_url'] = 'https://api.'. Domain::getDomain().'/users/'. $profile['handle'] . '/avatar';
