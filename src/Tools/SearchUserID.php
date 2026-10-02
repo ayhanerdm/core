@@ -35,7 +35,7 @@ class SearchUserID
         // Show session content which should be user_uuid if session is set, return false otherwise.
         // This means, a username cannot be "me" or "ben" ("ben" is me in Turkish), sorry Ben.
         if($userQuery === 'me' || $userQuery === 'ben') {
-            if(isset($_SESSION['user_uuid'])) return $_SESSION['user_uuid'];
+            if(isset($_SESSION['user_uuid'])) return base64_decode($_SESSION['user_uuid']);
             elseif(isset($_SESSION['user_id'])) return $_SESSION['user_id'];
             else {
                 self::$needsLogin = true;

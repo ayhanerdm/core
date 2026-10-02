@@ -39,8 +39,6 @@ class Account {
         ?string $last_online = null,
         ?PDO $pdo = null
     ): bool {
-        // Set the user table name from enum
-        self::$userTable = self::$userTable;
         $pdo = self::getDatabase($pdo);
         // Ensure input types are valid
         if(!is_null($user_id) && !is_int($user_id)) throw new \Exception('user_id must be int or null.');
