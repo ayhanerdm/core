@@ -64,7 +64,7 @@ class SearchUserID
 
         $sql = 'SELECT * FROM '. self::$accountsTable->value .' WHERE '.
         'user_id = :user_id or md5(user_id) = :user_id_md5 or sha2(user_id, 256) = :user_id_sha256'.
-        'user_uuid = :user_uuid or md5(user_uuid) = :user_uuid_md5 or sha2(user_uuid, 256) = :user_uuid_sha256 '.
+        'or user_uuid = :user_uuid or md5(user_uuid) = :user_uuid_md5 or sha2(user_uuid, 256) = :user_uuid_sha256 '.
         'or tg_id = :tg_id or md5(tg_id) = :tg_id_md5 or sha2(tg_id, 256) = :tg_id_sha256 '.
         'or email = :email or md5(email) = :email_md5 or sha2(email, 256) = :email_sha256 '.
         'or phone = :phone or md5(phone) = :phone_md5 or sha2(phone, 256) = :phone_sha256 '.
