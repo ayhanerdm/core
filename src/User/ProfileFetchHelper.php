@@ -14,7 +14,7 @@ class ProfileFetchHelper {
     private static ?string $inserted_user_uuid = null;
 
     public int $user_id = 0;
-    public ?string $user_uuid = null;
+    // public ?string $user_uuid = null;
     public ?string $title = null;
     public ?string $first_name = null;
     public ?string $middle_name = null;

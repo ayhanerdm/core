@@ -42,7 +42,7 @@ Trait ConnectsDatabase {
     /**
      * 
      */
-    public static string $user_uuid;
+    public static ?string $user_uuid;
 
     /**
      * @var int $lastAffectedID The last affected user_id after an insert, update, delete or fetch operation.
