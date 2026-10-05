@@ -18,6 +18,7 @@ class SearchUserID
     public static string $foundTable;
     public static ?string $uuid = null;
     public static ?bool $needsLogin = null;
+    public static ?bool $isBase64 = false;
 
     /**
      * Search for a user ID in multiple tables based on the provided query.
@@ -60,7 +61,7 @@ class SearchUserID
      * @return bool|int The user ID if found, false otherwise.
      */
     public static function userAccounts(int|string $userQuery, PDO $pdo): bool|string {
-        if(isBase64($userQuery)) $userQuery = base64_decode($userQuery, true);
+        if(self::$isBase64 === true && isBase64($userQuery)) $userQuery = base64_decode($userQuery, true);
 
         $sql = 'SELECT * FROM '. self::$accountsTable->value .' WHERE '.
         'user_id = :user_id or md5(user_id) = :user_id_md5 or sha2(user_id, 256) = :user_id_sha256 '.
