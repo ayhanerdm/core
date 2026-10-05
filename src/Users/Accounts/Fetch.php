@@ -2,6 +2,7 @@
 namespace ayhanerdm\Core\Users\Accounts;
 
 use \ayhanerdm\Core\Enums\UserTables;
+use \ayhanerdm\Core\Tools\SearchUserID;
 use \ayhanerdm\Core\Exception\CustomException;
 use \PDO;
 
@@ -17,14 +18,20 @@ class Fetch {
         
         if(!isset($options['user_query'])) {
             throw new CustomException(
-                'First argument of '. __CLASS__ . ' must contain a key named user_query.',
-                ''
+                message: 'First argument of '. __CLASS__ . ' must contain a key named user_query.',
+                wikiUrl: 'https://github.com/ayhanerdm/core/wiki/Custom-Exceptions#user_query',
             );
         }
 
-        $prep = $pdo->prepare('select * from '.self::$userTable.' where '.$where.' limit 1');
-        $prep->execute(['query' => $query]);
+        $user_uuid = SearchUserID::Search($options['user_query'], $pdo);
+
+        $prep = $pdo->prepare('select * from '.self::$userTable.' where user_uuid = :user_uuid limit 1');
+                $prep->execute(['user_uuid' => $user_uuid]);
+
         if($prep->rowCount() == 0) return false;
+
+        $fetchMethod = $options['fetch_method'] ?? self::$fetchMethod;
+
         return $prep->fetch($fetchMethod);
     }
 }
