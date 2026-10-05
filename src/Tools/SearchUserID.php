@@ -32,6 +32,8 @@ class SearchUserID
     public static function Search(null|int|string $userQuery, PDO $pdo): bool|string{
         if(is_null($userQuery) || empty($userQuery)) return false; // No query provided
 
+        if(self::$isBase64 === true && isBase64($userQuery)) $userQuery = base64_decode($userQuery, true);
+
         // Try to see if $_SESSION['user_id'] is set if the current user is trying to get their own data
         // Show session content which should be user_uuid if session is set, return false otherwise.
         // This means, a username cannot be "me" or "ben" ("ben" is me in Turkish), sorry Ben.
@@ -61,8 +63,6 @@ class SearchUserID
      * @return bool|int The user ID if found, false otherwise.
      */
     public static function userAccounts(int|string $userQuery, PDO $pdo): bool|string {
-        if(self::$isBase64 === true && isBase64($userQuery)) $userQuery = base64_decode($userQuery, true);
-
         $sql = 'SELECT * FROM '. self::$accountsTable->value .' WHERE '.
         'user_id = :user_id or md5(user_id) = :user_id_md5 or sha2(user_id, 256) = :user_id_sha256 '.
         'or user_uuid = :user_uuid or md5(user_uuid) = :user_uuid_md5 or sha2(user_uuid, 256) = :user_uuid_sha256 '.
