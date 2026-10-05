@@ -3,7 +3,7 @@ namespace ayhanerdm\Core\Traits;
 
 use ayhanerdm\Core\Tools\SearchUserID;
 use ayhanerdm\Core\Enums\UserTables;
-use PDO, Exception;
+use \PDO, \Exception;
 
 Trait ConnectsDatabase {
 
@@ -36,7 +36,13 @@ Trait ConnectsDatabase {
      * @var int $userID The user ID found by and set by SearchUserID::Search() method.
      * ayhanerdm\Core\Tools\SearchUserID::Search($userQuery, $pdo);
      */
+    // #[\Depracated]
     private static int $userID;
+
+    /**
+     * 
+     */
+    public static string $user_uuid;
 
     /**
      * @var int $lastAffectedID The last affected user_id after an insert, update, delete or fetch operation.
