@@ -17,6 +17,8 @@ class Crypto
         // 2. Kriptografik olarak güvenli rastgele bir IV üret
         $iv = random_bytes($ivLength);
 
+        if(ctype_xdigit($secretKey) && strlen($secretKey) % 2 === 0) $secretKey = hex2bin($secretKey);
+
         // 3. Veriyi şifrele
         $encryptedRaw = openssl_encrypt(
             $plainText,
@@ -53,6 +55,8 @@ class Crypto
 
         // 2. IV uzunluğunu belirle
         $ivLength = openssl_cipher_iv_length(self::CIPHER_METHOD);
+
+        if(ctype_xdigit($secretKey) && strlen($secretKey) % 2 === 0) $secretKey = hex2bin($secretKey);
 
         if (strlen($data) <= $ivLength) {
             return false; // Bozuk veya eksik veri

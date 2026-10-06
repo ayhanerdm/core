@@ -3,62 +3,35 @@ namespace ayhanerdm\Core\Traits;
 
 use ayhanerdm\Core\Tools\SearchUserID;
 use ayhanerdm\Core\Enums\UserTables;
+use \ayhanerdm\Core\Tools\Crypto;
+use \ayhanerdm\Core\Exception\CustomException;
 use \PDO, \Exception;
 
 Trait ConnectsDatabase {
 
-    /**
-     * @var PDO $pdo The PDO instance for database connection, set via setDatabase() method.
-     */
+    private const int DEFAULT_FETCH_METHOD = PDO::FETCH_OBJ;
+    private const string UNSET = '__UNSET__';
+
     private static PDO $pdo;
+    
+    private static array $options = [
+        'fetch_method' => self::DEFAULT_FETCH_METHOD,
+        'table_name' => null,
+        'database_connection' => null,
+        'crypto_class' => null,
+    ];
+    private static array $fetch_result = [
+        'sql' => null,
+        'result' => null,
+    ];
 
-    /**
-     * @var string $userTable Table name for the consuming class.
-     */
-    // private static string $userTable;
-
-    /**
-     * @var const int $DEFAULT_FETCH_METHOD The default fetch method for PDO queries.
-     */
-    private const DEFAULT_FETCH_METHOD = PDO::FETCH_OBJ;
-
-    /**
-     * @var int $fetchMethod The fetch method for PDO queries, default is PDO::FETCH_OBJ.
-     */
+    // These to be removed.
+    private static string $userTable;
     private static $fetchMethod = self::DEFAULT_FETCH_METHOD;
-
-    /**
-     * @var int|string $userQuery The user quer can be user_id, Turkish Government ID, email, username, phone number.
-     */
     private static int|string $userQuery;
-
-    /**
-     * @var int $userID The user ID found by and set by SearchUserID::Search() method.
-     * ayhanerdm\Core\Tools\SearchUserID::Search($userQuery, $pdo);
-     */
-    // #[\Depracated]
     private static int $userID;
-
-    /**
-     * 
-     */
-    public ?string $user_uuid;
-
-    /**
-     * @var int $lastAffectedID The last affected user_id after an insert, update, delete or fetch operation.
-     * This is set by the consuming class via setLastAffectedId() method.
-     */
     private static int $lastAffectedID;
-
-    /**
-     * @var object|array $user to hold user object after a Fetch method is called.
-     */
-    private static object|array $user;
-
-    /**
-     * @var const string $sql The SQL query to be executed.
-     */
-    private const UNSET = '__UNSET__';
+    public static $user;
 
     /**
      * Settings method to initialize the database connection, fetch method, and user table.
@@ -80,6 +53,10 @@ Trait ConnectsDatabase {
         return new self();
     }
 
+    public static function setOptions(array $options) {
+        self::$options = array_merge($options, self::$options);
+    }
+
     /**
      * Set the database connection using a PDO instance.
      * 
@@ -92,6 +69,7 @@ Trait ConnectsDatabase {
             throw new Exception('First parameter must be an instance of PDO'); // Validate that the provided instance is a PDO instance
         }
 
+        self::setOptions(['database_connection' => $pdo]);
         self::$pdo = $pdo;
         return new self();
     }

@@ -6,6 +6,7 @@
             "ayhanerdm\\Core\\": "src/"
         },
         "files": [
+            "src/Constants.php",
             "src/Functions.php"
         ]
     },

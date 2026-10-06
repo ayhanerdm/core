@@ -29,8 +29,8 @@ class SearchUserID
      * @param PDO $pdo The PDO instance to use for database operations.
      * @return bool|int The user ID if found, false otherwise.
      */
-    public static function Search(null|int|string $userQuery, PDO $pdo): bool|string{
-        if(is_null($userQuery) || empty($userQuery)) return false; // No query provided
+    public static function Search(int|string $userQuery, PDO $pdo): bool|string {
+        if(empty($userQuery)) return false; // No query provided
 
         if(self::$isBase64 === true && isBase64($userQuery)) $userQuery = base64_decode($userQuery, true);
 
@@ -47,7 +47,7 @@ class SearchUserID
         }
 
         foreach (['userAccounts', 'userEmails', 'userUsernames', 'userPhones', 'userSocials'] as $method) {
-            if (($result = self::$method($userQuery, $pdo)) !== false) return $result;
+            if(($result = self::$method($userQuery, $pdo)) !== false) return $result;
         }
 
         return false;
@@ -63,21 +63,20 @@ class SearchUserID
      * @return bool|int The user ID if found, false otherwise.
      */
     public static function userAccounts(int|string $userQuery, PDO $pdo): bool|string {
-        $sql = 'SELECT * FROM '. self::$accountsTable->value .' WHERE '.
-        'user_id = :user_id or md5(user_id) = :user_id_md5 or sha2(user_id, 256) = :user_id_sha256 '.
-        'or user_uuid = :user_uuid or md5(user_uuid) = :user_uuid_md5 or sha2(user_uuid, 256) = :user_uuid_sha256 '.
-        'or tg_id = :tg_id or md5(tg_id) = :tg_id_md5 or sha2(tg_id, 256) = :tg_id_sha256 '.
-        'or email = :email or md5(email) = :email_md5 or sha2(email, 256) = :email_sha256 '.
-        'or phone = :phone or md5(phone) = :phone_md5 or sha2(phone, 256) = :phone_sha256 '.
-        'or username = :username or md5(username) = :username_md5 or sha2(username, 256) = :username_sha256'; 
+        $sql = 'select * from '. self::$accountsTable->value .' where '.
+        'user_id = :user_id or '.
+        'user_uuid = :user_uuid or md5(user_uuid) = :user_uuid_md5 or sha2(user_uuid, 256) = :user_uuid_sha256 '.
+        'or tg_id_bindex = :tg_id_bindex or email_bindex = :email_bindex or phone_bindex = :phone_bindex '.
+        'or username_bindex = :username_bindex';
+
+        $secretKey = hex2bin($_ENV['APP_SECRET']); 
+        $userQueryHash = hash_hmac('sha256', $userQuery, $secretKey);
 
         $params = [
-            'user_id' => $userQuery, 'user_id_md5' => $userQuery, 'user_id_sha256' => $userQuery,
-            ':user_uuid' => $userQuery, ':user_uuid_md5' => $userQuery, ':user_uuid_sha256' => $userQuery,
-            ':tg_id' => $userQuery, ':tg_id_md5' => $userQuery, ':tg_id_sha256' => $userQuery,
-            ':email' => $userQuery, ':email_md5' => $userQuery, ':email_sha256' => $userQuery,
-            ':phone' => $userQuery, ':phone_md5' => $userQuery, ':phone_sha256' => $userQuery,
-            ':username' => $userQuery, ':username_md5' => $userQuery, ':username_sha256' => $userQuery,
+            'user_id' => $userQuery,
+            'user_uuid' => $userQuery, 'user_uuid_md5' => $userQuery, 'user_uuid_sha256' => $userQuery,
+            'tg_id_bindex' => $userQueryHash, 'email_bindex' => $userQueryHash, 'phone_bindex' => $userQueryHash,
+            'username_bindex' => $userQueryHash,
         ];
 
         $prep = $pdo->prepare($sql);
