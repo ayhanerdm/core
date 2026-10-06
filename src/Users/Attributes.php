@@ -48,6 +48,10 @@ class Attributes {
 
         // value bir json mı?
         if(gettype(self::getOption('value')) === 'string' && json_validate(self::getOption('value'))) $data_type = 'json';
+        elseif(gettype(self::getOption('value')) === 'boolean') {
+            if(self::getOption('value') === true) self::setOption('value', 1); $data_type = 'boolean';
+            if(self::getOption('value') === false) self::setOption('value', 0); $data_type = 'boolean';
+        }
         else $data_type = gettype(self::getOption('value'));
 
         // Attribute zaten var mı, kontrol edelim.
