@@ -26,7 +26,7 @@ Trait ConnectsDatabase {
     ];
 
     // These to be removed.
-    private static string $userTable;
+    // private static string $userTable;
     private static $fetchMethod = self::DEFAULT_FETCH_METHOD;
     private static int|string $userQuery;
     private static int $userID;

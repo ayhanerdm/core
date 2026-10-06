@@ -7,7 +7,8 @@
         },
         "files": [
             "src/Constants.php",
-            "src/Functions.php"
+            "src/Functions.php",
+            "src/UserFunctions.php"
         ]
     },
     "authors": [

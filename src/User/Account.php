@@ -110,22 +110,6 @@ class Account {
 
         if($result === false) return false;
 
-        if(is_object($result)) {
-            $result->online_status = (object)[
-            'status_int' => UserOnlineStatuses::tryFrom($result->online_status)?->getStatusInt(),
-            'status_string' => UserOnlineStatuses::tryFrom($result->online_status)?->getStatusString(),
-            'status_class' => UserOnlineStatuses::tryFrom($result->online_status)?->getStatusClass(),
-            ];
-        }
-
-        if(is_array($result)) {
-            $result['online_status'] = [
-            'status_int' => UserOnlineStatuses::tryFrom($result['online_status'])?->getStatusInt(),
-            'status_string' => UserOnlineStatuses::tryFrom($result['online_status'])?->getStatusString(),
-            'status_class' => UserOnlineStatuses::tryFrom($result['online_status'])?->getStatusClass(),
-            ];
-        }
-
         self::$user = $result;
 
         return $result;

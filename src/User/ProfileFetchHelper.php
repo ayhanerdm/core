@@ -14,7 +14,7 @@ class ProfileFetchHelper {
     private static ?string $inserted_user_uuid = null;
 
     public int $user_id = 0;
-    // public ?string $user_uuid = null;
+    public ?string $user_uuid = null;
     public ?string $title = null;
     public ?string $first_name = null;
     public ?string $middle_name = null;
@@ -27,13 +27,12 @@ class ProfileFetchHelper {
     public ?string $avatar_url = null;
     public ?string $cover_url = null;
     public ?string $gravatar_url = null; // Gravatar URL based on email
-    public ?string $birthdate = null;
-    public ?int $birthdate_timestamp = null;
     public ?string $sex = null;
     public ?string $gender = null;
     public ?string $pronouns = null;
     public ?string $short_biography = null;
     public ?string $long_biography = null;
+    public ?string $born_at = null;
     public ?string $created_at = null;
     public ?string $updated_at = null;
     public ?string $deleted_at = null;
