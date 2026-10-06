@@ -18,9 +18,9 @@
     }
 
     function setAttr(
+        string $type,
         string $name,
         mixed $value,
-        ?string $type = null,
     ): bool {
         if(!isLoggedIn()) return false;
 
@@ -30,15 +30,17 @@
         ]);
 
         return $attr::setAttr([
-            'name' => $name,
             'type' => $type,
+            'name' => $name,
             'value' => $value,
         ]);
     }
 
     function getAttr(
+        string $type,
         string $name,
-        ?string $type = null,
+        ?string $return_type = null,
+        ?bool $decode_json_value = null,
     ): mixed {
         if(!isLoggedIn()) return false;
 
@@ -50,6 +52,26 @@
         return $attr::getAttr([
             'name' => $name,
             'type' => $type,
-            'return_type' => value,
+            'return_type' => $return_type ?? 'value',
+            'decode_json_value' => $decode_json_value,
+        ]);
+    }
+
+    function deleteAttr(
+        string $type,
+        string $name,
+        string $delete_mode = 'soft_delete',
+    ): mixed {
+        if(!isLoggedIn()) return false;
+
+        $attr = new \ayhanerdm\Core\Users\Attributes([
+            'database_connection' => db(),
+            'user_query' => getUserUUID(),
+        ]);
+
+        return $attr::getAttr([
+            'name' => $name,
+            'type' => $type,
+            'delete_mode' => $delete_mode,
         ]);
     }

@@ -2,6 +2,8 @@
 namespace ayhanerdm\Core\Users;
 
 use \ayhanerdm\Core\Enums\UserTables;
+use \ayhanerdm\Core\Enums\DataTypes;
+use \ayhanerdm\Core\Enums\ReturnTypes;
 use \ayhanerdm\Core\Tools\SearchUserID;
 use \ayhanerdm\Core\Tools\Crypto;
 use \ayhanerdm\Core\Exception\CustomException;
@@ -140,19 +142,116 @@ class Attributes {
             }
         }
 
-        if($result['data_type'] === 'json' && json_validate($result['value'])) {
-            if(self::getOption('decode_json_value_as_array') === true) $result['value'] = json_decode($result['value'], true, 512, DEFAULT_JSON_FLAGS);
-            if(self::getOption('decode_json_value_as_object') === true) $result['value'] = json_decode($result['value'], false, 512, DEFAULT_JSON_FLAGS);
+        $data_type = DataTypes::tryFrom($result['data_type']);
+        $return_type = ReturnTypes::tryFrom(self::getOption('return_type'));
+
+        return $result['value']
+               |> match($data_type) {
+                   DataTypes::Json, DataTypes::JsonString => self::decodeJson(...),
+                   DataTypes::Boolean, DataTypes::Bool => fn(mixed $v): bool => filter_var($v, FILTER_VALIDATE_BOOLEAN),
+                   DataTypes::Integer, DataTypes::Int => intval(...),
+                   default => fn(mixed $v): mixed => $v,
+               }
+               |> (fn(mixed $v): mixed => (is_array($v) && $return_type === ReturnTypes::OBJECT) ? (object) $v : $v)
+               |> match($return_type) {
+                   ReturnTypes::VALUE => fn(mixed $v): mixed => $v,
+                   ReturnTypes::ARRAY => fn(mixed $v): array => array_merge($result, ['value' => $v]),
+                   ReturnTypes::OBJECT => fn(mixed $v): object => (object) array_merge($result, ['value' => $v]),
+                   ReturnTypes::JSON => fn(mixed $v): string|false => json_encode(array_merge($result, ['value' => $v]), DEFAULT_JSON_FLAGS, 512),
+                   default => fn(mixed $v): mixed => $v,
+               };
+    }
+
+    public static function deleteAttr(?array $options) { self::deleteAttribute($options); return 'Naber'; }
+    public static function deleteAttribute(?array $options) {
+        self::$options = array_merge($options, self::$options);
+
+        // Mantık: Tabloda attribute var mı kotrol et, varsa döndür, yoksa false döndür.
+
+        if(self::getOption('user_query') === null || self::getOption('user_query') === '') {
+            throw CustomException(
+                message: 'user_uuid cannot be unset, null or empty.',
+                wikiUrl: 'https://github.com/ayhanerdm/core/wiki/Custom-Exceptions',
+                errorCode: 'user_query_missing',
+            );
         }
 
-        // Mantık, options içinde return_type ile tüm satırı mı yoksa value değerini mi döndüreceğimizi belirleyelim.
-        // Ama peki ya return_type yoksa? O zaman varsayılan olarak ne dönecek?
-        return match(self::getOption('return_type') ?? null) {
-            'return_value', 'value' => $result['value'] ?? null,
-            'return_array', 'array' => $result,
-            'return_object', 'object' => (object) $result,
-            'json_string', 'json' => json_encode($result, DEFAULT_JSON_FLAGS, 512),
-            default => $result['value'] ?? null
-        };
+        $user_uuid = SearchUserID::Search(self::getOption('user_query'), self::getOption('database_connection'));
+
+        if(!$user_uuid) return false;
+
+        if(self::getOption('name') === null || self::getOption('name') === '') {
+            throw CustomException(
+                message: 'Attibute name cannot be unset, null or empty.',
+                wikiUrl: 'https://github.com/ayhanerdm/core/wiki/Custom-Exceptions',
+                errorCode: 'attibute_name_missing',
+            );
+        }
+
+        if(self::getOption('type') === '') self::setOption('type', null);
+
+        // Attribute var mı, kontrol edelim.
+        self::$fetch_details['sql'] = 'select * from ' . self::getOption('table_name') . ' where user_uuid = :user_uuid and type = :type and name = :name';
+        $prep = self::getOption('database_connection')->prepare(self::$fetch_details['sql']);
+        $execute = $prep->execute([
+                    'user_uuid' => $user_uuid,
+                    'type' => self::getOption('type'),
+                    'name' => self::getOption('name'),
+                ]);
+
+        if(!$execute) return false;
+
+        if(self::getOption('delete_mode') !== null) {
+            
+            switch(self::getOption('delete_mode')) {
+                case 'soft_delete': return self::softDelete(); break;
+                case 'hard_delete': return self::hardDelete(); break;
+                default: return self::softDelete();
+            }
+        }
+    }
+
+    // Helper functions
+    private static function decodeJson(mixed $value): mixed
+    {
+        if(
+            !is_string($value) ||
+            !json_validate($value) ||
+            self::getOption('decode_json_value') === false ||
+            self::getOption('decode_json_value') === null
+        ) return $value;
+
+        return json_decode($value, true, 512, DEFAULT_JSON_FLAGS);
+    }
+
+    private static function softDelete(): bool {
+        // Şu tarihte silindi, diye güncelle.
+        self::$fetch_details['sql'] = 'update ' . self::getOption('table_name') . ' set deleted_at = :deleted_at where user_uuid = :user_uuid and type = :type and name = :name';
+        $prep = self::getOption('database_connection')->prepare(self::$fetch_details['sql']);
+        $execute = $prep->execute([
+                    'user_uuid' => $user_uuid,
+                    'type' => self::getOption('type'),
+                    'name' => self::getOption('name'),
+                    'deleted_at' => time(),
+                ]);
+
+        if(!$execute) return false;
+
+        return true;
+    }
+
+    private static function hardDelete(): bool {
+        // Şu tarihte silindi, diye güncelle.
+        self::$fetch_details['sql'] = 'delete from ' . self::getOption('table_name') . ' where user_uuid = :user_uuid and type = :type and name = :name';
+        $prep = self::getOption('database_connection')->prepare(self::$fetch_details['sql']);
+        $execute = $prep->execute([
+                    'user_uuid' => $user_uuid,
+                    'type' => self::getOption('type'),
+                    'name' => self::getOption('name'),
+                ]);
+
+        if(!$execute) return false;
+
+        return true;
     }
 }
