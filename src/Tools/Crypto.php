@@ -43,7 +43,7 @@ class Crypto
      * Şifrelenmiş token'ı çözer ve orijinal düz metni döner.
      * Değiştirilmişse veya anahtar yanlışsa false döner.
      */
-    public static function decrypt(string $encryptedToken, string $secretKey): string|false
+    public static function decrypt(string $encryptedToken, string $secretKey): string|bool
     {
         // 1. URL-Safe Base64'ü standart Base64 formatına çevir ve decode et
         $normalized = strtr($encryptedToken, '-_', '+/');
