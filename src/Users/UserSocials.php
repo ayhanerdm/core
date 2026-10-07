@@ -30,7 +30,8 @@ class UserSocials
         ?string $provider_username = null,
         ?string $provider_email = null,
         array|string|null $meta_data = null,
-        string $visibility = 'private'
+        string $visibility = 'private',
+        bool $is_default = false
     ): int|false {
         $pdo = self::getOption('database_connection');
 
@@ -90,86 +91,139 @@ class UserSocials
         $username_bindex = $provider_username === null ? null : self::blindIndex($provider_username, $app_secret);
         $email_bindex = $provider_email === null ? null : self::blindIndex($provider_email, $app_secret);
 
-        $sql = 'SELECT id FROM ' . self::getOption('table_name') . '
-                WHERE provider = :provider
-                  AND provider_user_id = :provider_user_id
-                LIMIT 1';
+        $transaction_started = false;
 
-        self::$fetch_details['sql'] = $sql;
-
-        $prep = $pdo->prepare($sql);
-        $prep->execute([
-            'provider' => $provider,
-            'provider_user_id' => $provider_user_id,
-        ]);
-
-        $existing = $prep->fetch(PDO::FETCH_ASSOC);
-        $timestamp = (string) time();
-
-        if($existing !== false) {
-            $owner_sql = 'SELECT user_uuid FROM ' . self::getOption('table_name') . ' WHERE id = :id LIMIT 1';
-            $owner_prep = $pdo->prepare($owner_sql);
-            $owner_prep->execute(['id' => $existing['id']]);
-            $existing_owner = $owner_prep->fetchColumn();
-
-            if($existing_owner !== $user_uuid) {
-                throw new CustomException(
-                    'Bu sosyal hesap başka bir kullanıcıya bağlı.',
-                    null,
-                    'social_account_already_linked'
-                );
+        try {
+            if(!$pdo->inTransaction()) {
+                $pdo->beginTransaction();
+                $transaction_started = true;
             }
 
-            $sql = 'UPDATE ' . self::getOption('table_name') . '
-                    SET provider_username = :provider_username,
-                        provider_username_bindex = :provider_username_bindex,
-                        provider_email = :provider_email,
-                        provider_email_bindex = :provider_email_bindex,
-                        meta_data = :meta_data,
-                        visibility = :visibility,
-                        updated_at = :updated_at,
-                        deleted_at = NULL
-                    WHERE id = :id';
+            $sql = 'SELECT id FROM ' . self::getOption('table_name') . '
+                    WHERE provider = :provider
+                      AND provider_user_id = :provider_user_id
+                    LIMIT 1';
 
             self::$fetch_details['sql'] = $sql;
 
             $prep = $pdo->prepare($sql);
             $prep->execute([
+                'provider' => $provider,
+                'provider_user_id' => $provider_user_id,
+            ]);
+
+            $existing = $prep->fetch(PDO::FETCH_ASSOC);
+            $timestamp = (string) time();
+
+            if($existing !== false) {
+                $owner_sql = 'SELECT user_uuid FROM ' . self::getOption('table_name') . ' WHERE id = :id LIMIT 1';
+                $owner_prep = $pdo->prepare($owner_sql);
+                $owner_prep->execute(['id' => $existing['id']]);
+                $existing_owner = $owner_prep->fetchColumn();
+
+                if($existing_owner !== $user_uuid) {
+                    throw new CustomException(
+                        'Bu sosyal hesap başka bir kullanıcıya bağlı.',
+                        null,
+                        'social_account_already_linked'
+                    );
+                }
+
+                if($is_default) {
+                    $default_sql = 'UPDATE ' . self::getOption('table_name') . '
+                                     SET is_default = 0
+                                     WHERE user_uuid = :user_uuid
+                                       AND provider = :provider
+                                       AND is_default = 1';
+
+                    self::$fetch_details['sql'] = $default_sql;
+
+                    $default_prep = $pdo->prepare($default_sql);
+                    $default_prep->execute([
+                        'user_uuid' => $user_uuid,
+                        'provider' => $provider,
+                    ]);
+                }
+
+                $sql = 'UPDATE ' . self::getOption('table_name') . '
+                        SET provider_username = :provider_username,
+                            provider_username_bindex = :provider_username_bindex,
+                            provider_email = :provider_email,
+                            provider_email_bindex = :provider_email_bindex,
+                            meta_data = :meta_data,
+                            visibility = :visibility,
+                            is_default = :is_default,
+                            updated_at = :updated_at,
+                            deleted_at = NULL
+                        WHERE id = :id';
+
+                self::$fetch_details['sql'] = $sql;
+
+                $prep = $pdo->prepare($sql);
+                $prep->execute([
+                    'provider_username' => $encrypted_username,
+                    'provider_username_bindex' => $username_bindex,
+                    'provider_email' => $encrypted_email,
+                    'provider_email_bindex' => $email_bindex,
+                    'meta_data' => $encrypted_meta_data,
+                    'visibility' => $visibility,
+                    'is_default' => $is_default ? 1 : 0,
+                    'updated_at' => $timestamp,
+                    'id' => $existing['id'],
+                ]);
+
+                if($transaction_started) $pdo->commit();
+
+                return (int) $existing['id'];
+            }
+
+            if($is_default) {
+                $default_sql = 'UPDATE ' . self::getOption('table_name') . '
+                                 SET is_default = 0
+                                 WHERE user_uuid = :user_uuid
+                                   AND provider = :provider
+                                   AND is_default = 1';
+
+                self::$fetch_details['sql'] = $default_sql;
+
+                $default_prep = $pdo->prepare($default_sql);
+                $default_prep->execute([
+                    'user_uuid' => $user_uuid,
+                    'provider' => $provider,
+                ]);
+            }
+
+            $sql = 'INSERT INTO ' . self::getOption('table_name') . '
+                    (user_uuid, provider, provider_user_id, provider_username, provider_username_bindex, provider_email, provider_email_bindex, meta_data, visibility, is_default, created_at, updated_at, deleted_at)
+                    VALUES (:user_uuid, :provider, :provider_user_id, :provider_username, :provider_username_bindex, :provider_email, :provider_email_bindex, :meta_data, :visibility, :is_default, :created_at, :updated_at, NULL)';
+
+            self::$fetch_details['sql'] = $sql;
+
+            $prep = $pdo->prepare($sql);
+            $prep->execute([
+                'user_uuid' => $user_uuid,
+                'provider' => $provider,
+                'provider_user_id' => $provider_user_id,
                 'provider_username' => $encrypted_username,
                 'provider_username_bindex' => $username_bindex,
                 'provider_email' => $encrypted_email,
                 'provider_email_bindex' => $email_bindex,
                 'meta_data' => $encrypted_meta_data,
                 'visibility' => $visibility,
+                'is_default' => $is_default ? 1 : 0,
+                'created_at' => $timestamp,
                 'updated_at' => $timestamp,
-                'id' => $existing['id'],
             ]);
 
-            return (int) $existing['id'];
+            $social_id = (int) $pdo->lastInsertId();
+
+            if($transaction_started) $pdo->commit();
+
+            return $social_id;
+        } catch(\Throwable $exception) {
+            if($transaction_started && $pdo->inTransaction()) $pdo->rollBack();
+            throw $exception;
         }
-
-        $sql = 'INSERT INTO ' . self::getOption('table_name') . '
-                (user_uuid, provider, provider_user_id, provider_username, provider_username_bindex, provider_email, provider_email_bindex, meta_data, visibility, created_at, updated_at, deleted_at)
-                VALUES (:user_uuid, :provider, :provider_user_id, :provider_username, :provider_username_bindex, :provider_email, :provider_email_bindex, :meta_data, :visibility, :created_at, :updated_at, NULL)';
-
-        self::$fetch_details['sql'] = $sql;
-
-        $prep = $pdo->prepare($sql);
-        $prep->execute([
-            'user_uuid' => $user_uuid,
-            'provider' => $provider,
-            'provider_user_id' => $provider_user_id,
-            'provider_username' => $encrypted_username,
-            'provider_username_bindex' => $username_bindex,
-            'provider_email' => $encrypted_email,
-            'provider_email_bindex' => $email_bindex,
-            'meta_data' => $encrypted_meta_data,
-            'visibility' => $visibility,
-            'created_at' => $timestamp,
-            'updated_at' => $timestamp,
-        ]);
-
-        return (int) $pdo->lastInsertId();
     }
 
     public static function set(
@@ -178,9 +232,10 @@ class UserSocials
         ?string $provider_username = null,
         ?string $provider_email = null,
         array|string|null $meta_data = null,
-        string $visibility = 'private'
+        string $visibility = 'private',
+        bool $is_default = false
     ): int|false {
-        return self::setSocial($provider, $provider_user_id, $provider_username, $provider_email, $meta_data, $visibility);
+        return self::setSocial($provider, $provider_user_id, $provider_username, $provider_email, $meta_data, $visibility, $is_default);
     }
 
     public static function getSocial(
@@ -215,6 +270,8 @@ class UserSocials
             $conditions[] = 'user_uuid = :user_uuid';
             $parameters['user_uuid'] = $user_uuid;
 
+            $conditions[] = 'is_default = 1';
+
             if($provider !== null) {
                 $conditions[] = 'provider = :provider';
                 $parameters['provider'] = $provider;
@@ -241,7 +298,7 @@ class UserSocials
         $sql = 'SELECT * FROM ' . self::getOption('table_name') . '
                 WHERE ' . implode(' AND ', $conditions) . ' ORDER BY id DESC';
 
-        if($social_id !== null) $sql .= ' LIMIT 1';
+        $sql .= ' LIMIT 1';
 
         self::$fetch_details['sql'] = $sql;
 
@@ -260,6 +317,50 @@ class UserSocials
             foreach($result as &$row) $row = self::decryptResult($row);
             unset($row);
         }
+
+        return self::formatResult($result);
+    }
+
+    public static function getSocials(
+        ?string $provider = null,
+        bool $is_default = false,
+        bool $include_deleted = false
+    ): mixed {
+        $pdo = self::getOption('database_connection');
+
+        if(!$pdo instanceof PDO) {
+            throw new CustomException('Geçerli bir database_connection verilmedi.', null, 'invalid_database_connection');
+        }
+
+        $user_uuid = SearchUserID::Search(self::getOption('user_query'), $pdo);
+        if($user_uuid === false) return false;
+
+        $conditions = ['user_uuid = :user_uuid'];
+        $parameters = ['user_uuid' => $user_uuid];
+
+        if($provider !== null) {
+            $conditions[] = 'provider = :provider';
+            $parameters['provider'] = $provider;
+        }
+
+        if($is_default) $conditions[] = 'is_default = 1';
+        if(!$include_deleted) $conditions[] = 'deleted_at IS NULL';
+
+        $sql = 'SELECT * FROM ' . self::getOption('table_name') . '
+                WHERE ' . implode(' AND ', $conditions) . '
+                ORDER BY id DESC';
+
+        self::$fetch_details['sql'] = $sql;
+
+        $prep = $pdo->prepare($sql);
+        $prep->execute($parameters);
+
+        $result = $prep->fetchAll(PDO::FETCH_ASSOC);
+
+        if($result === []) return false;
+
+        foreach($result as &$row) $row = self::decryptResult($row);
+        unset($row);
 
         return self::formatResult($result);
     }
