@@ -240,7 +240,7 @@ class UserSocialsCredentials
 
         $decrypted = $crypto_class::decrypt($result['value'], $app_secret);
 
-        if(!is_string($decrypted)) {
+        if($decrypted === false) {
             throw new CustomException('Credential değeri çözülemedi.', null, 'credential_decryption_failed');
         }
 
@@ -252,19 +252,20 @@ class UserSocialsCredentials
     {
         $custom_crypto = self::getOption('crypto_class');
 
-        if(
-            $custom_crypto !== null &&
-            is_string($custom_crypto) &&
-            self::isCompatibleCryptoClass($custom_crypto)
-        ) {
+        if($custom_crypto !== null) {
+            if(!is_string($custom_crypto) || !self::isCompatibleCryptoClass($custom_crypto)) {
+                throw new CustomException(
+                    'Verilen crypto_class beklenen API ile uyumlu değil.',
+                    null,
+                    'invalid_crypto_class'
+                );
+            }
+
             return $custom_crypto;
         }
 
-        $default_crypto = Crypto::class;
-
-        if(self::isCompatibleCryptoClass($default_crypto)) return $default_crypto;
-
-        throw new CustomException('Kullanılabilir bir crypto sınıfı bulunamadı.', null, 'invalid_crypto_class');
+        // crypto_class verilmemişse projenin varsayılan Crypto sınıfını kullan.
+        return Crypto::class;
     }
 
     private static function isCompatibleCryptoClass(string $crypto_class): bool
