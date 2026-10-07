@@ -8,6 +8,7 @@ Enum UserTables: string {
     case UserAddresses = 'user_addresses';
     case UserAttributes = 'user_attributes';
     case UserSocials = 'user_socials';
+    case UserSocialsCredentials = 'user_socials_credentials';
     case UserUsernames = 'user_usernames';
     case UserWallets = 'user_wallets';
     case UserPosts = 'user_posts';

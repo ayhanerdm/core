@@ -166,12 +166,12 @@ class SearchUserID
     }
 
     public static function userSocials(int|string $userQuery, PDO $pdo): bool|string {
-        $sql = 'select * from ' . self::$socialsTable->value . ' where provider_id = :provider_id or md5(provider_id) = :provider_id_md5 or sha2(provider_id, 256) = :provider_id_sha256 or '
+        $sql = 'select * from ' . self::$socialsTable->value . ' where provider_user_id = :provider_user_id or md5(provider_user_id) = :provider_user_id_md5 or sha2(provider_user_id, 256) = :provider_user_id_sha256 or '
                .'provider_username = :provider_username or md5(provider_username) = :provider_username_md5 or sha2(provider_username, 256) = :provider_username_sha256';
 
         $prep = $pdo->prepare($sql);
         $prep->execute([
-            'provider_id' => $userQuery, 'provider_id_md5' => $userQuery, 'provider_id_sha256' => $userQuery,
+            'provider_user_id' => $userQuery, 'provider_user_id_md5' => $userQuery, 'provider_user_id_sha256' => $userQuery,
             'provider_username' => $userQuery, 'provider_username_md5' => $userQuery, 'provider_username_sha256' => $userQuery,
         ]);
 
