@@ -135,7 +135,6 @@ class UserSocials
 
             $prep = $pdo->prepare($sql);
             $prep->execute([
-                'user_uuid' => $user_uuid,
                 'provider_username' => $encrypted_username,
                 'provider_username_bindex' => $username_bindex,
                 'provider_email' => $encrypted_email,
@@ -253,9 +252,14 @@ class UserSocials
             ? $prep->fetch(PDO::FETCH_ASSOC)
             : $prep->fetchAll(PDO::FETCH_ASSOC);
 
-        if($result !== false && $result !== []) $result = self::decryptResult($result);
-
         if($result === false || $result === []) return false;
+
+        if($social_id !== null) {
+            $result = self::decryptResult($result);
+        } else {
+            foreach($result as &$row) $row = self::decryptResult($row);
+            unset($row);
+        }
 
         return self::formatResult($result);
     }
