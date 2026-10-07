@@ -113,6 +113,19 @@ class UserSocials
             ]);
 
             $existing = $prep->fetch(PDO::FETCH_ASSOC);
+
+            $count_sql = 'SELECT COUNT(*) FROM ' . self::getOption('table_name') . '
+                          WHERE user_uuid = :user_uuid
+                            AND provider = :provider';
+
+            $count_prep = $pdo->prepare($count_sql);
+            $count_prep->execute([
+                'user_uuid' => $user_uuid,
+                'provider' => $provider,
+            ]);
+
+            if((int) $count_prep->fetchColumn() === 0) $is_default = true;
+
             $timestamp = (string) time();
 
             if($existing !== false) {
