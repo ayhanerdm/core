@@ -305,18 +305,11 @@ class UserSocials
         $prep = $pdo->prepare($sql);
         $prep->execute($parameters);
 
-        $result = $social_id !== null
-            ? $prep->fetch(PDO::FETCH_ASSOC)
-            : $prep->fetchAll(PDO::FETCH_ASSOC);
+        $result = $prep->fetch(PDO::FETCH_ASSOC);
 
-        if($result === false || $result === []) return false;
+        if($result === false) return false;
 
-        if($social_id !== null) {
-            $result = self::decryptResult($result);
-        } else {
-            foreach($result as &$row) $row = self::decryptResult($row);
-            unset($row);
-        }
+        $result = self::decryptResult($result);
 
         return self::formatResult($result);
     }
