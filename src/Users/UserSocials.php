@@ -283,17 +283,26 @@ class UserSocials
             throw new CustomException('Geçerli bir database_connection verilmedi.', null, 'invalid_database_connection');
         }
 
+        $user_uuid = SearchUserID::Search(self::getOption('user_query'), $pdo);
+        if($user_uuid === false) return false;
+
         if($hard_delete) {
-            $sql = 'DELETE FROM ' . self::getOption('table_name') . ' WHERE id = :id';
+            $sql = 'DELETE FROM ' . self::getOption('table_name') . '
+                    WHERE id = :id AND user_uuid = :user_uuid';
+
             self::$fetch_details['sql'] = $sql;
             $prep = $pdo->prepare($sql);
-            $prep->execute(['id' => $social_id]);
+            $prep->execute([
+                'id' => $social_id,
+                'user_uuid' => $user_uuid,
+            ]);
+
             return $prep->rowCount() > 0;
         }
 
         $sql = 'UPDATE ' . self::getOption('table_name') . '
                 SET deleted_at = :deleted_at, updated_at = :updated_at
-                WHERE id = :id AND deleted_at IS NULL';
+                WHERE id = :id AND user_uuid = :user_uuid AND deleted_at IS NULL';
 
         self::$fetch_details['sql'] = $sql;
 
@@ -303,6 +312,7 @@ class UserSocials
             'deleted_at' => $timestamp,
             'updated_at' => $timestamp,
             'id' => $social_id,
+            'user_uuid' => $user_uuid,
         ]);
 
         return $prep->rowCount() > 0;
