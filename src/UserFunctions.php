@@ -48,7 +48,7 @@
             'database_connection' => db(),
             'user_query' => getUserUUID(),
         ]);
-
+        
         return $attr::getAttr([
             'name' => $name,
             'type' => $type,
@@ -69,7 +69,7 @@
             'user_query' => getUserUUID(),
         ]);
 
-        return $attr::getAttr([
+        return $attr::deleteAttr([
             'name' => $name,
             'type' => $type,
             'delete_mode' => $delete_mode,

@@ -14,7 +14,7 @@ Trait ConnectsDatabaseBeta {
 
     private static PDO $pdo;
     
-    private static array $options = [
+    public static array $options = [
         'fetch_method' => self::DEFAULT_FETCH_METHOD,
         'table_name' => null,
         'time_format' => null,
