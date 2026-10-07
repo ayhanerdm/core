@@ -5,9 +5,14 @@ namespace ayhanerdm\Core\Users;
 use \ayhanerdm\Core\Enums\UserTables;
 use \ayhanerdm\Core\Enums\ReturnTypes;
 use \ayhanerdm\Core\Tools\SearchUserID;
+use \ayhanerdm\Core\Tools\Crypto;
 use \ayhanerdm\Core\Exception\CustomException;
 use \ayhanerdm\Core\Traits\ConnectsDatabaseBeta;
 use \PDO;
+use \ReflectionMethod;
+use \ReflectionNamedType;
+use \ReflectionUnionType;
+use \ReflectionType;
 
 class UserSocials
 {
@@ -23,6 +28,7 @@ class UserSocials
         string $provider,
         string $provider_user_id,
         ?string $provider_username = null,
+        ?string $provider_email = null,
         array|string|null $meta_data = null,
         string $visibility = 'private'
     ): int|false {
@@ -39,6 +45,9 @@ class UserSocials
             throw new CustomException('provider ve provider_user_id boş bırakılamaz.', null, 'invalid_social_identity');
         }
 
+        if($provider_username !== null && $provider_username === '') $provider_username = null;
+        if($provider_email !== null && $provider_email === '') $provider_email = null;
+
         if($meta_data !== null && is_array($meta_data)) {
             $meta_data = json_encode($meta_data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
@@ -52,6 +61,34 @@ class UserSocials
                 throw new CustomException('meta_data geçerli bir JSON değil.', null, 'invalid_social_metadata');
             }
         }
+
+        $crypto_class = self::getCryptoClass();
+        $app_secret = self::getOption('app_secret');
+
+        if(!is_string($app_secret) || $app_secret === '') {
+            throw new CustomException('Social verilerinin şifrelenmesi için app_secret gereklidir.', null, 'missing_app_secret');
+        }
+
+        $encrypted_username = $provider_username === null
+            ? null
+            : $crypto_class::encrypt($provider_username, $app_secret);
+
+        $encrypted_email = $provider_email === null
+            ? null
+            : $crypto_class::encrypt($provider_email, $app_secret);
+
+        $encrypted_meta_data = $meta_data === null
+            ? null
+            : $crypto_class::encrypt($meta_data, $app_secret);
+
+        if(($provider_username !== null && !is_string($encrypted_username))
+            || ($provider_email !== null && !is_string($encrypted_email))
+            || ($meta_data !== null && !is_string($encrypted_meta_data))) {
+            throw new CustomException('Social verileri şifrelenemedi.', null, 'social_encryption_failed');
+        }
+
+        $username_bindex = $provider_username === null ? null : self::blindIndex($provider_username, $app_secret);
+        $email_bindex = $provider_email === null ? null : self::blindIndex($provider_email, $app_secret);
 
         $sql = 'SELECT id FROM ' . self::getOption('table_name') . '
                 WHERE provider = :provider
@@ -70,9 +107,24 @@ class UserSocials
         $timestamp = (string) time();
 
         if($existing !== false) {
+            $owner_sql = 'SELECT user_uuid FROM ' . self::getOption('table_name') . ' WHERE id = :id LIMIT 1';
+            $owner_prep = $pdo->prepare($owner_sql);
+            $owner_prep->execute(['id' => $existing['id']]);
+            $existing_owner = $owner_prep->fetchColumn();
+
+            if($existing_owner !== $user_uuid) {
+                throw new CustomException(
+                    'Bu sosyal hesap başka bir kullanıcıya bağlı.',
+                    null,
+                    'social_account_already_linked'
+                );
+            }
+
             $sql = 'UPDATE ' . self::getOption('table_name') . '
-                    SET user_uuid = :user_uuid,
-                        provider_username = :provider_username,
+                    SET provider_username = :provider_username,
+                        provider_username_bindex = :provider_username_bindex,
+                        provider_email = :provider_email,
+                        provider_email_bindex = :provider_email_bindex,
                         meta_data = :meta_data,
                         visibility = :visibility,
                         updated_at = :updated_at,
@@ -84,8 +136,11 @@ class UserSocials
             $prep = $pdo->prepare($sql);
             $prep->execute([
                 'user_uuid' => $user_uuid,
-                'provider_username' => $provider_username,
-                'meta_data' => $meta_data,
+                'provider_username' => $encrypted_username,
+                'provider_username_bindex' => $username_bindex,
+                'provider_email' => $encrypted_email,
+                'provider_email_bindex' => $email_bindex,
+                'meta_data' => $encrypted_meta_data,
                 'visibility' => $visibility,
                 'updated_at' => $timestamp,
                 'id' => $existing['id'],
@@ -95,8 +150,8 @@ class UserSocials
         }
 
         $sql = 'INSERT INTO ' . self::getOption('table_name') . '
-                (user_uuid, provider, provider_user_id, provider_username, meta_data, visibility, created_at, updated_at, deleted_at)
-                VALUES (:user_uuid, :provider, :provider_user_id, :provider_username, :meta_data, :visibility, :created_at, :updated_at, NULL)';
+                (user_uuid, provider, provider_user_id, provider_username, provider_username_bindex, provider_email, provider_email_bindex, meta_data, visibility, created_at, updated_at, deleted_at)
+                VALUES (:user_uuid, :provider, :provider_user_id, :provider_username, :provider_username_bindex, :provider_email, :provider_email_bindex, :meta_data, :visibility, :created_at, :updated_at, NULL)';
 
         self::$fetch_details['sql'] = $sql;
 
@@ -105,8 +160,11 @@ class UserSocials
             'user_uuid' => $user_uuid,
             'provider' => $provider,
             'provider_user_id' => $provider_user_id,
-            'provider_username' => $provider_username,
-            'meta_data' => $meta_data,
+            'provider_username' => $encrypted_username,
+            'provider_username_bindex' => $username_bindex,
+            'provider_email' => $encrypted_email,
+            'provider_email_bindex' => $email_bindex,
+            'meta_data' => $encrypted_meta_data,
             'visibility' => $visibility,
             'created_at' => $timestamp,
             'updated_at' => $timestamp,
@@ -119,10 +177,11 @@ class UserSocials
         string $provider,
         string $provider_user_id,
         ?string $provider_username = null,
+        ?string $provider_email = null,
         array|string|null $meta_data = null,
         string $visibility = 'private'
     ): int|false {
-        return self::setSocial($provider, $provider_user_id, $provider_username, $meta_data, $visibility);
+        return self::setSocial($provider, $provider_user_id, $provider_username, $provider_email, $meta_data, $visibility);
     }
 
     public static function getSocial(
@@ -130,6 +189,7 @@ class UserSocials
         ?string $provider = null,
         ?string $provider_user_id = null,
         ?string $provider_username = null,
+        ?string $provider_email = null,
         bool $include_deleted = false
     ): mixed {
         $pdo = self::getOption('database_connection');
@@ -142,8 +202,13 @@ class UserSocials
         $parameters = [];
 
         if($social_id !== null) {
+            $user_uuid = SearchUserID::Search(self::getOption('user_query'), $pdo);
+            if($user_uuid === false) return false;
+
             $conditions[] = 'id = :id';
+            $conditions[] = 'user_uuid = :user_uuid';
             $parameters['id'] = $social_id;
+            $parameters['user_uuid'] = $user_uuid;
         } else {
             $user_uuid = SearchUserID::Search(self::getOption('user_query'), $pdo);
             if($user_uuid === false) return false;
@@ -162,8 +227,13 @@ class UserSocials
             }
 
             if($provider_username !== null) {
-                $conditions[] = 'provider_username = :provider_username';
-                $parameters['provider_username'] = $provider_username;
+                $conditions[] = 'provider_username_bindex = :provider_username_bindex';
+                $parameters['provider_username_bindex'] = self::blindIndex($provider_username, self::getAppSecret());
+            }
+
+            if($provider_email !== null) {
+                $conditions[] = 'provider_email_bindex = :provider_email_bindex';
+                $parameters['provider_email_bindex'] = self::blindIndex($provider_email, self::getAppSecret());
             }
         }
 
@@ -183,6 +253,8 @@ class UserSocials
             ? $prep->fetch(PDO::FETCH_ASSOC)
             : $prep->fetchAll(PDO::FETCH_ASSOC);
 
+        if($result !== false && $result !== []) $result = self::decryptResult($result);
+
         if($result === false || $result === []) return false;
 
         return self::formatResult($result);
@@ -193,9 +265,10 @@ class UserSocials
         ?string $provider = null,
         ?string $provider_user_id = null,
         ?string $provider_username = null,
+        ?string $provider_email = null,
         bool $include_deleted = false
     ): mixed {
-        return self::getSocial($social_id, $provider, $provider_user_id, $provider_username, $include_deleted);
+        return self::getSocial($social_id, $provider, $provider_user_id, $provider_username, $provider_email, $include_deleted);
     }
 
     public static function deleteSocial(string|int $social_id, bool $hard_delete = false): bool
@@ -234,6 +307,123 @@ class UserSocials
     public static function delete(string|int $social_id, bool $hard_delete = false): bool
     {
         return self::deleteSocial($social_id, $hard_delete);
+    }
+
+    private static function getAppSecret(): string
+    {
+        $app_secret = self::getOption('app_secret');
+
+        if(!is_string($app_secret) || $app_secret === '') {
+            throw new CustomException('Social verileri için app_secret gereklidir.', null, 'missing_app_secret');
+        }
+
+        return $app_secret;
+    }
+
+    private static function blindIndex(string $value, string $secret): string
+    {
+        return hash_hmac('sha256', mb_strtolower(trim($value), 'UTF-8'), $secret);
+    }
+
+    private static function decryptResult(array $result): array
+    {
+        $crypto_class = self::getCryptoClass();
+        $app_secret = self::getAppSecret();
+
+        foreach(['provider_username', 'provider_email', 'meta_data'] as $field) {
+            if($result[$field] === null) continue;
+
+            $decrypted = $crypto_class::decrypt($result[$field], $app_secret);
+
+            if($decrypted === false) {
+                throw new CustomException($field . ' çözülemedi.', null, 'social_decryption_failed');
+            }
+
+            if($field === 'meta_data') {
+                $decoded = json_decode($decrypted, true);
+
+                if(json_last_error() !== JSON_ERROR_NONE) {
+                    throw new CustomException('meta_data çözüldü ancak geçerli JSON değil.', null, 'invalid_social_metadata');
+                }
+
+                $result[$field] = $decoded;
+            } else {
+                $result[$field] = $decrypted;
+            }
+        }
+
+        return $result;
+    }
+
+    private static function getCryptoClass(): string
+    {
+        $custom_crypto = self::getOption('crypto_class');
+
+        if($custom_crypto !== null) {
+            if(!is_string($custom_crypto) || !self::isCompatibleCryptoClass($custom_crypto)) {
+                throw new CustomException('Verilen crypto_class beklenen API ile uyumlu değil.', null, 'invalid_crypto_class');
+            }
+
+            return $custom_crypto;
+        }
+
+        return Crypto::class;
+    }
+
+    private static function isCompatibleCryptoClass(string $crypto_class): bool
+    {
+        if(!class_exists($crypto_class)) return false;
+
+        foreach(['encrypt', 'decrypt'] as $method_name) {
+            if(!method_exists($crypto_class, $method_name)) return false;
+
+            try { $method = new ReflectionMethod($crypto_class, $method_name); }
+            catch(\ReflectionException) { return false; }
+
+            if(!$method->isPublic() || !$method->isStatic()) return false;
+            $parameters = $method->getParameters();
+            if(count($parameters) !== 2) return false;
+
+            foreach($parameters as $parameter) {
+                $type = $parameter->getType();
+                if($type !== null && !self::typeAcceptsString($type)) return false;
+            }
+        }
+
+        if(!self::typeIsString((new ReflectionMethod($crypto_class, 'encrypt'))->getReturnType())) return false;
+        if(!self::typeIsStringOrBool((new ReflectionMethod($crypto_class, 'decrypt'))->getReturnType())) return false;
+
+        return true;
+    }
+
+    private static function typeAcceptsString(ReflectionType $type): bool
+    {
+        if($type instanceof ReflectionNamedType) return $type->getName() === 'string';
+
+        if($type instanceof ReflectionUnionType) {
+            foreach($type->getTypes() as $union_type) {
+                if($union_type instanceof ReflectionNamedType && $union_type->getName() === 'string') return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function typeIsString(?ReflectionType $type): bool
+    {
+        return $type instanceof ReflectionNamedType && $type->getName() === 'string';
+    }
+
+    private static function typeIsStringOrBool(?ReflectionType $type): bool
+    {
+        if(!$type instanceof ReflectionUnionType) return false;
+        $types = [];
+        foreach($type->getTypes() as $union_type) {
+            if(!$union_type instanceof ReflectionNamedType) return false;
+            $types[] = $union_type->getName();
+        }
+        sort($types);
+        return $types === ['bool', 'string'];
     }
 
     private static function formatResult(mixed $result): mixed
