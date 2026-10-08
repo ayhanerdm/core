@@ -91,6 +91,6 @@ class Profiles {
                 self::$fetch_details['result'];
     }
 
-    public static function getUserUrls(): array { return self::$user_urls; }
+    public static function getUserUrls(): array|object { return (self::getOption('fetch_method') === PDO::FETCH_OBJ) ? (object) self::$user_urls : self::$user_urls; }
     public static function getUserUrl(string $url_name): ?string { return self::$user_urls[$url_name]; }
 }
