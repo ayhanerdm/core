@@ -52,6 +52,8 @@ class Profiles {
 
         $result = $prep->fetch(PDO::FETCH_ASSOC);
 
+        self::isLegalAge();
+
         $matched_rows = [];
 
         foreach($result as $columnName => $value) {
@@ -89,8 +91,6 @@ class Profiles {
             'cover' => getCurrentOrigin() . '/api/users/' . $user_handle . '/cover',
             'gravatar' => 'https://gravatar.com/avatar/' . $email_hash,
         ];
-
-        self::isLegalAge();
 
         return  (self::getOption('fetch_method') === PDO::FETCH_OBJ) ?
                 (object) self::$fetch_details['result'] :
