@@ -54,7 +54,6 @@ class Profiles {
 
         self::$raw_fetch_result = $result = $prep->fetch(PDO::FETCH_ASSOC);
 
-
         $matched_rows = [];
 
         foreach($result as $columnName => $value) {
