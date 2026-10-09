@@ -115,7 +115,7 @@ class Profiles {
     {
         if(self::$raw_fetch_result['born_at'] === null || empty(self::$raw_fetch_result['born_at'])) return null;
 
-        $birthDate = (new \DateTimeImmutable())->setTimestamp(self::$raw_fetch_result['born_at']);
+        $birthDate = (new \DateTimeImmutable())->setTimestamp((int) self::$raw_fetch_result['born_at']);
         $today = new \DateTimeImmutable('today');
 
         return $birthDate->diff($today)->y >= $age;
