@@ -164,16 +164,20 @@ class Crypto {
      * Bu bir parola güçlendirme algoritması değildir.
      * secretKey yüksek entropili ve gizli bir değer olmalıdır.
      */
-    private static function deriveKey(string $secretKey): string
-    {
+    private static function deriveKey(string $secretKey): string {
         if($secretKey === '') {
-            throw new RuntimeException(
-                'The encryption secret must not be empty.'
-            );
+            throw new RuntimeException('The encryption secret must not be empty.');
+        }
+
+        if(strlen($secretKey) === 64 && ctype_xdigit($secretKey)) {
+            $decodedKey = hex2bin($secretKey);
+
+            if($decodedKey !== false) return $decodedKey;
         }
 
         return hash('sha256', $secretKey, true);
     }
+
 
     /**
      * URL-safe Base64 token'ını doğrular ve çözer.
