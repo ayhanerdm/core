@@ -58,15 +58,14 @@ class Profiles {
         $matched_rows = [];
 
         foreach($result as $columnName => $value) {
-            $bindexKey = $columnName . '_bindex';
 
-            if(self::getOption('app_secret') !== null && self::getOption('app_secret') !== '') {
+            if(self::getOption('app_secret') !== null && !empty(self::getOption('app_secret'))) {
                 if(array_key_exists($bindexKey, $result)) {
-                    if($value !== null) $result[$columnName] = Crypto::decrypt($value, self::getOption('app_secret'));
+                    if($value !== null && Crypto::hasMagicHeader($value)) $result[$columnName] = Crypto::decrypt($value, self::getOption('app_secret'));
                 }
             }
 
-            unset($result[$bindexKey]);
+            // unset($result[$bindexKey]);
 
             if($value !== null && self::getOption('time_format') !== null) {
                 if(str_ends_with($columnName, '_at') && isUnixTimestamp($value)) $result[$columnName] = date(self::getOption('time_format'), $value);
@@ -112,7 +111,7 @@ class Profiles {
     public static function isLegalAge(int $age = 18): ?bool {
         return self::$computed['is_legal_age'] = self::hasReachedAge($age);
     }
-    
+
     public static function hasReachedAge(int $age = 18): ?bool
     {
         if(self::$raw_fetch_result['born_at'] === null || empty(self::$raw_fetch_result['born_at'])) return null;
