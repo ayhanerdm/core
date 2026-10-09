@@ -19,6 +19,10 @@ class Profiles {
         'gravatar' => null,
     ];
 
+    private static array $computed = [
+        'is_legal_age' => null,
+    ];
+
     public function __construct(?array $options = null) {
         if($options !== null) self::setOptions($options);
         self::setOption('table_name', UserTables::UserProfiles->value);
@@ -93,4 +97,23 @@ class Profiles {
 
     public static function getUserUrls(): array|object { return (self::getOption('fetch_method') === PDO::FETCH_OBJ) ? (object) self::$user_urls : self::$user_urls; }
     public static function getUserUrl(string $url_name): ?string { return self::$user_urls[$url_name]; }
+
+    public static function getComputedData(): array|object {
+        return  (self::getOption('fetch_method') === PDO::FETCH_OBJ) ?
+                (object) self::$computed :
+                self::$computed;
+    }
+
+    public static function isLegalAge(int $age = 18): bool {
+        return self::$computed['is_legal_age'] = self::hasReachedAge($age);
+    }
+    public static function hasReachedAge(int $age = 18): ?bool
+    {
+        if(self::$fetch_details['result']['born_at'] === null || empty(self::$fetch_details['result']['born_at'])) return null;
+
+        $birthDate = (new \DateTimeImmutable())->setTimestamp(self::$fetch_details['result']['born_at']);
+        $today = new \DateTimeImmutable('today');
+
+        return $birthDate->diff($today)->y >= $age;
+    }
 }
