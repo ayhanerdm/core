@@ -90,6 +90,8 @@ class Profiles {
             'gravatar' => 'https://gravatar.com/avatar/' . $email_hash,
         ];
 
+        self::isLegalAge();
+
         return  (self::getOption('fetch_method') === PDO::FETCH_OBJ) ?
                 (object) self::$fetch_details['result'] :
                 self::$fetch_details['result'];
