@@ -57,17 +57,14 @@ class Profiles {
         $matched_rows = [];
 
         foreach($result as $columnName => $value) {
-
             if(self::getOption('app_secret') !== null && !empty(self::getOption('app_secret'))) {
                 if($value !== null && Crypto::hasMagicHeader($value)) {
                     $result[$columnName] = Crypto::decrypt($value, self::getOption('app_secret'));
                 }
             }
 
-            // unset($result[$bindexKey]);
-
             if($value !== null && self::getOption('time_format') !== null) {
-                if(str_ends_with($columnName, '_at') && isUnixTimestamp($value)) $result[$columnName] = date(self::getOption('time_format'), $value);
+                if(str_ends_with($columnName, '_at') && isUnixTimestamp($result[$columnName])) $result[$columnName] = date(self::getOption('time_format'), $result[$columnName]);
             }
         }
 
