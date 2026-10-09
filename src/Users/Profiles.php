@@ -60,8 +60,8 @@ class Profiles {
         foreach($result as $columnName => $value) {
 
             if(self::getOption('app_secret') !== null && !empty(self::getOption('app_secret'))) {
-                if(array_key_exists($bindexKey, $result)) {
-                    if($value !== null && Crypto::hasMagicHeader($value)) $result[$columnName] = Crypto::decrypt($value, self::getOption('app_secret'));
+                if($value !== null && Crypto::hasMagicHeader($value)) {
+                    $result[$columnName] = Crypto::decrypt($value, self::getOption('app_secret'));
                 }
             }
 
