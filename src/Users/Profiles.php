@@ -12,6 +12,8 @@ class Profiles {
     // Use the ConnectsDatabase trait to handle database connections
     use \ayhanerdm\Core\Traits\ConnectsDatabaseBeta;
 
+    private static array $raw_fetch_result;
+
     private static array $user_urls = [
         'profile' => null,
         'avatar' => null,
@@ -50,9 +52,8 @@ class Profiles {
 
         if($prep->rowCount() == 0) return false;
 
-        $result = $prep->fetch(PDO::FETCH_ASSOC);
+        self::$raw_fetch_result = $result = $prep->fetch(PDO::FETCH_ASSOC);
 
-        self::isLegalAge();
 
         $matched_rows = [];
 
@@ -73,6 +74,8 @@ class Profiles {
         }
 
         self::$fetch_details['result'] = $result;
+
+        self::isLegalAge();
 
         // Also populate user_urls.
         $accounts = Accounts::Fetch([
@@ -106,14 +109,15 @@ class Profiles {
                 self::$computed;
     }
 
-    public static function isLegalAge(int $age = 18): bool {
+    public static function isLegalAge(int $age = 18): ?bool {
         return self::$computed['is_legal_age'] = self::hasReachedAge($age);
     }
+    
     public static function hasReachedAge(int $age = 18): ?bool
     {
-        if(self::$fetch_details['result']['born_at'] === null || empty(self::$fetch_details['result']['born_at'])) return null;
+        if(self::$raw_fetch_result['born_at'] === null || empty(self::$raw_fetch_result['born_at'])) return null;
 
-        $birthDate = (new \DateTimeImmutable())->setTimestamp(self::$fetch_details['result']['born_at']);
+        $birthDate = (new \DateTimeImmutable())->setTimestamp(self::$raw_fetch_result['born_at']);
         $today = new \DateTimeImmutable('today');
 
         return $birthDate->diff($today)->y >= $age;
