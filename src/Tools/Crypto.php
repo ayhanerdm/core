@@ -24,7 +24,7 @@ class Crypto {
      */
     public static function encrypt(string $plainText, string $secretKey): string
     {
-        $key = self::deriveKey($secretKey);
+        $key = self::deriveKey($secretKey, $_ENV['APP_SECRET_FORMAT'] ?? 'auto');
 
         $header = self::MAGIC_HEADER . chr(self::VERSION);
         $nonce = random_bytes(self::NONCE_LENGTH);
@@ -131,7 +131,7 @@ class Crypto {
         if($version !== self::VERSION) return false;
 
         try {
-            $key = self::deriveKey($secretKey);
+            $key = self::deriveKey($secretKey, $_ENV['APP_SECRET_FORMAT'] ?? 'auto');
         } catch(RuntimeException $e) {
             return false;
         }
@@ -164,18 +164,40 @@ class Crypto {
      * Bu bir parola güçlendirme algoritması değildir.
      * secretKey yüksek entropili ve gizli bir değer olmalıdır.
      */
-    private static function deriveKey(string $secretKey): string {
+    private static function deriveKey(string $secretKey, string $format = 'auto'): string {
         if($secretKey === '') {
             throw new RuntimeException('The encryption secret must not be empty.');
         }
 
-        if(strlen($secretKey) === 64 && ctype_xdigit($secretKey)) {
-            $decodedKey = hex2bin($secretKey);
+        if($format === 'hex') {
+            if(strlen($secretKey) !== 64 || !ctype_xdigit($secretKey)) {
+                throw new RuntimeException('The hexadecimal encryption secret must contain exactly 64 hexadecimal characters.');
+            }
 
-            if($decodedKey !== false) return $decodedKey;
+            return hex2bin($secretKey);
         }
 
-        return hash('sha256', $secretKey, true);
+        if($format === 'binary') {
+            if(strlen($secretKey) !== 32) {
+                throw new RuntimeException('The binary encryption secret must contain exactly 32 bytes.');
+            }
+
+            return $secretKey;
+        }
+
+        if($format === 'raw') {
+            return hash('sha256', $secretKey, true);
+        }
+
+        if($format === 'auto') {
+            if(strlen($secretKey) === 64 && ctype_xdigit($secretKey)) {
+                return hex2bin($secretKey);
+            }
+
+            return hash('sha256', $secretKey, true);
+        }
+
+        throw new RuntimeException('Unsupported encryption secret format.');
     }
 
 
