@@ -70,7 +70,7 @@ class Profiles {
 
         self::$fetch_details['result'] = $result;
 
-        self::isLegalAge();
+        self::isLegalAge(); 
 
         // Also populate user_urls.
         $accounts = Accounts::Fetch([
@@ -116,5 +116,9 @@ class Profiles {
         $today = new \DateTimeImmutable('today');
 
         return $birthDate->diff($today)->y >= $age;
+    }
+
+    public static function Test(): bool {
+        return true;
     }
 }
