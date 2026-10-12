@@ -11,6 +11,12 @@ class Accounts {
     // Use the ConnectsDatabase trait to handle database connections
     use \ayhanerdm\Core\Traits\ConnectsDatabaseBeta;
 
+    public static array $computed = [
+        'user_uuid_hash' => null,
+        'user_email_hash' => null,
+        'user_handle' => null,
+    ];
+
     public function __construct(?array $options = null) {
         if($options !== null) self::setOptions($options);
         self::setOption('table_name', UserTables::UserAccounts->value);
@@ -57,6 +63,13 @@ class Accounts {
             }
         }
 
+        self::$computed = [
+            'uuid_hash' => ($uuid_hash = hash('sha256', $result['user_uuid'])),
+            'email_hash' => ($email_hash = hash('sha256', $accounts['email'])),
+            'user_handle' => ($result['username'] ?? $uuid_hash)
+
+        ];
+        
         self::$fetch_details['result'] = $result;
 
         return  (self::getOption('fetch_method') === PDO::FETCH_OBJ) ?

@@ -73,21 +73,19 @@ class Profiles {
         self::isLegalAge(); 
 
         // Also populate user_urls.
-        $accounts = Accounts::Fetch([
+        $accounts = new Accounts([
                 'database_connection' => self::getOption('database_connection'),
                 'app_secret' => self::getOption('app_secret') ?? $_ENV['APP_SECRET'] ?? null,
                 'user_query' => self::getOption('user_query'),
             ]);
 
-        $uuid_hash = hash('sha256', $accounts->user_uuid);
-        $email_hash = hash('sha256', $accounts->email);
-        $user_handle = $accounts->username ?? $uuid_hash;
+        $accounts::Fetch();
 
         self::$user_urls = [
-            'profile' => getCurrentOrigin() . '/' . $user_handle,
-            'avatar' => getCurrentOrigin() . '/api/users/' . $user_handle . '/avatar',
-            'cover' => getCurrentOrigin() . '/api/users/' . $user_handle . '/cover',
-            'gravatar' => 'https://gravatar.com/avatar/' . $email_hash,
+            'profile' => getCurrentOrigin() . '/' . $accounts['computed']['user_handle'],
+            'avatar' => getCurrentOrigin() . '/api/users/' . $accounts['computed']['user_handle'] . '/avatar',
+            'cover' => getCurrentOrigin() . '/api/users/' . $accounts['computed']['user_handle'] . '/cover',
+            'gravatar' => 'https://gravatar.com/avatar/' . $accounts['computed']['email_hash'],
         ];
 
         return  (self::getOption('fetch_method') === PDO::FETCH_OBJ) ?
