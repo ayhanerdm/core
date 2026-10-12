@@ -65,11 +65,11 @@ class Accounts {
 
         self::$computed = [
             'uuid_hash' => ($uuid_hash = hash('sha256', $result['user_uuid'])),
-            'email_hash' => ($email_hash = hash('sha256', $accounts['email'])),
+            'email_hash' => ($email_hash = hash('sha256', $result['email'])),
             'user_handle' => ($result['username'] ?? $uuid_hash)
 
         ];
-        
+
         self::$fetch_details['result'] = $result;
 
         return  (self::getOption('fetch_method') === PDO::FETCH_OBJ) ?
