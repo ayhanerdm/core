@@ -82,10 +82,10 @@ class Profiles {
         $accounts::Fetch();
 
         self::$user_urls = [
-            'profile' => getCurrentOrigin() . '/' . $accounts['computed']['user_handle'],
-            'avatar' => getCurrentOrigin() . '/api/users/' . $accounts['computed']['user_handle'] . '/avatar',
-            'cover' => getCurrentOrigin() . '/api/users/' . $accounts['computed']['user_handle'] . '/cover',
-            'gravatar' => 'https://gravatar.com/avatar/' . $accounts['computed']['email_hash'],
+            'profile' => getCurrentOrigin() . '/' . $accounts::$computed['user_handle'],
+            'avatar' => getCurrentOrigin() . '/api/users/' . $accounts::$computed['user_handle'] . '/avatar',
+            'cover' => getCurrentOrigin() . '/api/users/' . $accounts::$computed['user_handle'] . '/cover',
+            'gravatar' => 'https://gravatar.com/avatar/' . $accounts::$computed['email_hash'],
         ];
 
         return  (self::getOption('fetch_method') === PDO::FETCH_OBJ) ?
